@@ -1,0 +1,66 @@
+{{ block "index" . }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+    <script>
+        htmx.on('htmx:afterRequest', function(event) {
+            if (event.detail.xhr.status === 422) {
+                const errorContainer = document.getElementById('error-container');
+                errorContainer.innerHTML = event.detail.xhr.responseText;
+            }
+        });
+    </script>
+</head>
+<body>
+    <button hx-target="#count" hx-post="/increment">Count</button>
+    <div id="count">
+        {{ template "count" . }}
+    </div>
+
+    <form hx-post="/contacts/" hx-target="#display" hx-swap="afterend" hx-on::after-request="if(event.detail.successful) this.reset()" hx-indicator="#error-container"> 
+        name: <input type="text" name="name">
+        email: <input type="text" name="email">
+        <button type="submit">Add contact</button> 
+    </form> 
+    
+    <div id="error-container"></div>
+    <div id="display"> </div>
+    
+</body>
+</html>
+{{ end }}
+
+{{ block "count" . }}
+    {{ .Value }}
+{{ end }}
+
+{{ block "display" . }}
+    {{ range . }}
+        {{ template "user" . }}
+    {{ end }}
+{{ end }}
+
+{{ block "user" . }}
+<div id="user-{{ .ID }}">
+    Name : {{ .Username }} <br>
+    Email : {{ .Email }} <br>
+    <button hx-delete="/contacts/{{ .ID }}" 
+        hx-target="#user-{{ .ID }}" 
+        hx-swap="outerHTML">
+    Delete
+    </button>
+    <hr>
+</div>
+{{ end }}
+
+{{ block "error" . }}
+<div id="error-message" class="error" style="color: red;">
+    {{ . }}
+</div>
+{{ end }}
+
+
