@@ -99,6 +99,9 @@ func main() {
 	router.Handle("/", middlewares.DetailedLoggingMiddleware(handleIndex(tmpl, count, contacts)))
 	router.Handle("/contacts/", middlewares.DetailedLoggingMiddleware(HandleContacts(tmpl, contacts)))
 	router.Handle("/increment", middlewares.DetailedLoggingMiddleware(handleIncrement(tmpl, count)))
+	// router.Handle("/edit/", middlewares.DetailedLoggingMiddleware(HandleEditForm(tmpl, contacts)))
+
+	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	// Créer un serveur web :
 	// Un serveur web est un programme qui écoute les requêtes HTTP et y répond
@@ -130,6 +133,54 @@ func HandleContacts(tmpl *Templates, contacts *Contacts) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received %s request for %s", r.Method, r.URL.Path)
 
+		// Two cases for a GET request : /contacts/{id} and /contacts/{id}/edit
+		if r.Method == http.MethodGet {
+
+			// Case: /contacts/{id}/edit
+			if r.URL.Path[len(r.URL.Path)-5:] == "/edit" {
+				idStr := r.URL.Path[len("/contacts/") : len(r.URL.Path)-5] // enlever "/edit"
+				id, err := strconv.Atoi(idStr)
+				if err != nil {
+					log.Println("Error converting id to int:", err)
+					http.Error(w, "Invalid ID", http.StatusBadRequest)
+					return
+				}
+				for _, contact := range *contacts {
+					if contact.ID == id {
+						// Case: /contacts/{id}/edit
+						log.Println("Editing contact:", contact)
+						// w.Header().Set("Content-Type", "text/html")
+						tmpl.ExecuteTemplate(w, "editForm", contact)
+						return
+					}
+				}
+				http.Error(w, "Contact not found", http.StatusNotFound)
+				return
+
+			} else {
+				// Case: /contacts/{id}
+				idStr := r.URL.Path[len("/contacts/"):]
+				id, err := strconv.Atoi(idStr)
+				log.Println("Displaying contact:", id)
+				if err != nil {
+					log.Println("Error converting id to int:", err)
+					http.Error(w, "Invalid ID", http.StatusBadRequest)
+					return
+				}
+				for _, contact := range *contacts {
+					if contact.ID == id {
+						log.Println("Displaying contact:", contact)
+						tmpl.ExecuteTemplate(w, "user", contact)
+						return
+					}
+
+				}
+				http.Error(w, "Contact not found", http.StatusNotFound)
+				return
+			}
+
+		}
+
 		if r.Method == http.MethodPost {
 			username := r.FormValue("name")
 			email := r.FormValue("email")
@@ -150,7 +201,6 @@ func HandleContacts(tmpl *Templates, contacts *Contacts) http.HandlerFunc {
 		}
 
 		if r.Method == http.MethodDelete {
-			log.Println("Delete request received")
 			idStr := r.URL.Path[len("/contacts/"):]
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
@@ -169,7 +219,54 @@ func HandleContacts(tmpl *Templates, contacts *Contacts) http.HandlerFunc {
 			return
 		}
 
+		if r.Method == http.MethodPut {
+			idStr := r.URL.Path[len("/contacts/"):]
+			id, err := strconv.Atoi(idStr)
+			if err != nil {
+				log.Println("Error converting id to int:", err)
+				http.Error(w, "Invalid ID", http.StatusBadRequest)
+				return
+			}
+			username := r.FormValue("name")
+			email := r.FormValue("email")
+			for i, contact := range *contacts {
+				if contact.ID == id {
+					(*contacts)[i].Username = username
+					(*contacts)[i].Email = email
+					log.Println("Contact modified.")
+					tmpl.ExecuteTemplate(w, "user", (*contacts)[i])
+					return
+				}
+			}
+			http.Error(w, "Contact not found", http.StatusNotFound)
+			return
+		}
+
 		log.Printf("Unhandled method: %s", r.Method)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
+
+// func HandleEditForm(tmpl *Templates, contacts *Contacts) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		log.Printf("Received %s request for %s", r.Method, r.URL.Path)
+// 		idStr := r.URL.Path[len("/edit/"):]
+// 		id, err := strconv.Atoi(idStr)
+// 		if err != nil {
+// 			log.Println("Error converting id to int:", err)
+// 			http.Error(w, "Invalid ID", http.StatusBadRequest)
+// 			return
+// 		}
+
+// 		for _, contact := range *contacts {
+// 			if contact.ID == id {
+// 				log.Println("Editing contact:", contact)
+// 				w.Header().Set("Content-Type", "text/html")
+// 				tmpl.ExecuteTemplate(w, "editForm", contact)
+// 				return
+// 			}
+// 		}
+
+// 		http.Error(w, "Contact not found", http.StatusNotFound)
+// 	}
+// }

@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <!-- add favicon  -->
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
     <script>
         htmx.on('htmx:afterRequest', function(event) {
@@ -16,6 +18,7 @@
     </script>
 </head>
 <body>
+    
     <button hx-target="#count" hx-post="/increment">Count</button>
     <div id="count">
         {{ template "count" . }}
@@ -45,14 +48,15 @@
 {{ end }}
 
 {{ block "user" . }}
-<div id="user-{{ .ID }}">
-    Name : {{ .Username }} <br>
-    Email : {{ .Email }} <br>
-    <button hx-delete="/contacts/{{ .ID }}" 
+<div id="user-{{ .ID }}" hx-target="this" hx-swap="outerHTML">
+    <div> <label> Name </label>: {{ .Username}}</div>
+    <div> <label> Email </label>: {{ .Email}}</div>
+    <button 
         hx-target="#user-{{ .ID }}" 
         hx-swap="outerHTML">
     Delete
     </button>
+    <button hx-get="/contacts/{{.ID}}/edit">Click to edit</button>
     <hr>
 </div>
 {{ end }}
@@ -64,3 +68,20 @@
 {{ end }}
 
 
+{{ block "editForm" . }}
+<!-- Create a form to edit the contact within a mother div so that we can replace the form with the not updated/updated contact -->
+<div id="edit-form-container"> 
+    <form hx-put="/contacts/{{ .ID }}" hx-target="#edit-form-container" hx-swap="outerHTML">
+        <div>
+            <label for="name">Name</label>
+            <input type="text" name="name" value="{{ .Username }}">
+        </div>
+        <div>
+            <label for="email">Email</label>
+            <input type="text" name="email" value="{{ .Email }}">
+        </div>
+        <button type="submit">Submit</button>
+        <button hx-get="/contacts/{{ .ID }}" hx-target="#edit-form-container" hx-swap="outerHTML">Cancel</button>
+    </form>
+</div>
+{{ end }}
