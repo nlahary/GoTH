@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <!-- add favicon  -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
     <script>
@@ -18,21 +18,27 @@
         });
     </script>
 </head>
-<body>
+<body class="bg-gray-100 p-4">
 
-    <button hx-target="#count" hx-post="/increment">Count</button>
-    <div id="count">
+    <button class="bg-blue-500 text-white px-4 py-2 rounded" hx-target="#count" hx-post="/increment">Count</button>
+    <div id="count" class="mt-4">
         {{ template "count" . }}
     </div>
 
-    <form hx-post="/contacts/" hx-target="#display" hx-swap="afterend" hx-on::after-request="if(event.detail.successful) this.reset()" hx-indicator="#error-container"> 
-        name: <input type="text" name="name">
-        email: <input type="text" name="email">
-        <button type="submit">Add contact</button> 
+    <form class="mt-4" hx-post="/contacts/" hx-target="#display" hx-swap="afterend" hx-on::after-request="if(event.detail.successful) this.reset()" hx-indicator="#error-container"> 
+        <div class="mb-4">
+            <label class="block text-gray-700">Name:</label>
+            <input class="border rounded w-full py-2 px-3" type="text" name="name">
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-700">Email:</label>
+            <input class="border rounded w-full py-2 px-3" type="text" name="email">
+        </div>
+        <button class="bg-green-500 text-white px-4 py-2 rounded" type="submit">Add contact</button> 
     </form> 
     
-    <div id="error-container"></div>
-    <div id="display"> </div>
+    <div id="error-container" class="text-red-500 mt-4"></div>
+    <div id="display" class="mt-4"> </div>
     
 </body>
 </html>
@@ -49,17 +55,18 @@
 {{ end }}
 
 {{ block "user" . }}
-<div id="user-{{ .ID }}" hx-target="this" hx-swap="outerHTML">
-    <div> <label> Name </label>: {{ .Username}}</div>
-    <div> <label> Email </label>: {{ .Email}}</div>
+<div id="user-{{ .ID }}" class="p-4 bg-white shadow rounded mb-4" hx-target="this" hx-swap="outerHTML">
+    <div class="mb-2"> <label class="font-bold"> Name </label>: {{ .Username}}</div>
+    <div class="mb-2"> <label class="font-bold"> Email </label>: {{ .Email}}</div>
     <button 
+        class="bg-red-500 text-white px-4 py-2 rounded"
         hx-delete="/contacts/{{ .ID }}"
         hx-target="#user-{{ .ID }}" 
         hx-swap="outerHTML">
     Delete
     </button>
-    <button hx-get="/contacts/{{.ID}}/edit">Click to edit</button>
-    <hr>
+    <button class="bg-yellow-500 text-white px-4 py-2 rounded mt-2" hx-get="/contacts/{{.ID}}/edit">Click to edit</button>
+    <hr class="mt-4">
 </div>
 {{ end }}
 
@@ -72,18 +79,20 @@
 
 {{ block "editForm" . }}
 <!-- Create a form to edit the contact within a mother div so that we can replace the form with the not updated/updated contact -->
-<div id="edit-form-container"> 
-    <form hx-put="/contacts/{{ .ID }}" hx-target="#edit-form-container" hx-swap="outerHTML">
+<div id="edit-form-container" class="p-4 bg-white shadow rounded mb-4"> 
+    <form hx-put="/contacts/{{ .ID }}" hx-target="#edit-form-container" hx-swap="outerHTML" class="space-y-4">
         <div>
-            <label for="name">Name</label>
-            <input type="text" name="name" value="{{ .Username }}">
+            <label for="name" class="block text-gray-700">Name</label>
+            <input type="text" name="name" value="{{ .Username }}" class="border rounded w-full py-2 px-3">
         </div>
         <div>
-            <label for="email">Email</label>
-            <input type="text" name="email" value="{{ .Email }}">
+            <label for="email" class="block text-gray-700">Email</label>
+            <input type="text" name="email" value="{{ .Email }}" class="border rounded w-full py-2 px-3">
         </div>
-        <button type="submit">Submit</button>
-        <button hx-get="/contacts/{{ .ID }}" hx-target="#edit-form-container" hx-swap="outerHTML">Cancel</button>
+        <div class="flex space-x-4">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
+            <button hx-get="/contacts/{{ .ID }}" hx-target="#edit-form-container" hx-swap="outerHTML" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+        </div>
     </form>
 </div>
 {{ end }}
