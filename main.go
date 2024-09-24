@@ -36,6 +36,10 @@ type Contact struct {
 	Email    string
 }
 
+func GenerateID(contacts Contacts) int {
+	return len(contacts) + 1
+}
+
 func CreateContact(id int, username, email string) *Contact {
 	return &Contact{
 		ID:       id,
@@ -53,6 +57,15 @@ func (c *Contact) Exists(contacts Contacts) bool {
 	return false
 }
 
+func UsernameOrEmailIsTaken(id int, username, email string, contacts Contacts) bool {
+	for _, contact := range contacts {
+		if (contact.Email == email || contact.Username == username) && contact.ID != id {
+			return true
+		}
+	}
+	return false
+}
+
 func DeleteContact(id int, contacts *Contacts) error {
 	for i, contact := range *contacts {
 		if contact.ID == id {
@@ -63,8 +76,9 @@ func DeleteContact(id int, contacts *Contacts) error {
 	return errors.New("contact not found")
 }
 
-func GenerateID(contacts Contacts) int {
-	return len(contacts) + 1
+func (c *Contact) Update(username, email string) {
+	c.Username = username
+	c.Email = email
 }
 
 type Contacts = []Contact
@@ -229,10 +243,14 @@ func HandleContacts(tmpl *Templates, contacts *Contacts) http.HandlerFunc {
 			}
 			username := r.FormValue("name")
 			email := r.FormValue("email")
+			if UsernameOrEmailIsTaken(id, username, email, *contacts) {
+				w.WriteHeader(http.StatusUnprocessableEntity)
+				tmpl.ExecuteTemplate(w, "error", "User already exists")
+				return
+			}
 			for i, contact := range *contacts {
 				if contact.ID == id {
-					(*contacts)[i].Username = username
-					(*contacts)[i].Email = email
+					(*contacts)[i].Update(username, email)
 					log.Println("Contact modified.")
 					tmpl.ExecuteTemplate(w, "user", (*contacts)[i])
 					return
@@ -246,27 +264,3 @@ func HandleContacts(tmpl *Templates, contacts *Contacts) http.HandlerFunc {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
-
-// func HandleEditForm(tmpl *Templates, contacts *Contacts) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		log.Printf("Received %s request for %s", r.Method, r.URL.Path)
-// 		idStr := r.URL.Path[len("/edit/"):]
-// 		id, err := strconv.Atoi(idStr)
-// 		if err != nil {
-// 			log.Println("Error converting id to int:", err)
-// 			http.Error(w, "Invalid ID", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		for _, contact := range *contacts {
-// 			if contact.ID == id {
-// 				log.Println("Editing contact:", contact)
-// 				w.Header().Set("Content-Type", "text/html")
-// 				tmpl.ExecuteTemplate(w, "editForm", contact)
-// 				return
-// 			}
-// 		}
-
-// 		http.Error(w, "Contact not found", http.StatusNotFound)
-// 	}
-// }
