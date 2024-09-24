@@ -18,7 +18,7 @@
     </script>
 </head>
 <body>
-    
+
     <button hx-target="#count" hx-post="/increment">Count</button>
     <div id="count">
         {{ template "count" . }}
@@ -52,6 +52,7 @@
     <div> <label> Name </label>: {{ .Username}}</div>
     <div> <label> Email </label>: {{ .Email}}</div>
     <button 
+        hx-delete="/contacts/{{ .ID }}"
         hx-target="#user-{{ .ID }}" 
         hx-swap="outerHTML">
     Delete
