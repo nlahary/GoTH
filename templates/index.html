@@ -9,6 +9,7 @@
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
     <script>
+        // register a listener for the htmx:afterRequest event to handle 422 responses (HTMX default behavior is to ignore them)
         htmx.on('htmx:afterRequest', function(event) {
             if (event.detail.xhr.status === 422) {
                 const errorContainer = document.getElementById('error-container');
