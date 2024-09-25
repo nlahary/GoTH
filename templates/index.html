@@ -20,6 +20,11 @@
 </head>
 <body class="bg-gray-100 p-4">
 
+    <ul class="flex space-x-4 mb-4"> 
+        <li><a href="/" class="text-blue-500 hover:text-blue-700">Home</a></li>
+        <li><a href="/" class="text-blue-500 hover:text-blue-700">Contacts</a></li>
+        <li><a href="/" class="text-blue-500 hover:text-blue-700">About</a></li>
+    </ul>
     <button class="bg-blue-500 text-white px-4 py-2 rounded" hx-target="#count" hx-post="/increment">Count</button>
     <div id="count" class="mt-4">
         {{ template "count" . }}

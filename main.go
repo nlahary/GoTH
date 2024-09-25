@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/Nathanael-FR/website/middlewares"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Templates struct {
@@ -32,8 +33,8 @@ type Contact struct {
 	Email    string
 }
 
-func GenerateID(contacts Contacts) int {
-	return contacts[len(contacts)-1].ID + 1
+func GenerateID() int {
+	return IDcounter + 1
 }
 
 func CreateContact(id int, username, email string) *Contact {
@@ -78,6 +79,8 @@ func (c *Contact) Update(username, email string) {
 }
 
 type Contacts = []Contact
+
+var IDcounter = 1
 
 type Count struct {
 	Value int
@@ -184,7 +187,7 @@ func HandleContacts(tmpl *Templates, contacts *Contacts) http.HandlerFunc {
 		if r.Method == http.MethodPost {
 			username := r.FormValue("name")
 			email := r.FormValue("email")
-			id := GenerateID(*contacts)
+			id := GenerateID()
 			newContact := CreateContact(id, username, email)
 
 			if newContact.Exists(*contacts) {
