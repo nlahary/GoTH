@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+    <title>Products</title>
+
+    {{ template displayProducts }}
+</head>
+<body>
+    
+</body>
+</html>
+
+{{ block product . }}
+    <div>
+        <h2>{{ .name }}</h2>
+        <p>{{ .description }}</p>
+        <p>{{ .price }}</p>
+        <button hx-post="/cart" hx-swap="outerHTML" hx-trigger="click" hx-target="#cart" hx-indicator=".loading">Add to Cart</button>
+    </div>
+{{ end }}
+
+{{ block displayProducts . }}
+    {{ range . }}
+        {{ template "product" . }}
+    {{ end }}
+{{ end }}

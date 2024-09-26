@@ -18,13 +18,19 @@
         });
     </script>
 </head>
-<body class="bg-gray-100 p-4">
+<body class="bg-[#142E36] p-4">
 
-    <ul class="flex space-x-4 mb-4"> 
-        <li><a href="/" class="text-blue-500 hover:text-blue-700">Home</a></li>
-        <li><a href="/" class="text-blue-500 hover:text-blue-700">Contacts</a></li>
-        <li><a href="/" class="text-blue-500 hover:text-blue-700">About</a></li>
-    </ul>
+    
+<nav class="flex justify-between items-center py-4">
+    <div>   
+        <a href="/" class="text-[#727D80] hover:text-gray-400 font-aileron">Product</a>
+        <a href="/" class="text-[#727D80] hover:text-gray-400 font-aileron">Developers</a>
+        <a href="/" class="text-[#727D80] hover:text-gray-400 font-aileron">Pricing</a>
+        <a href="/" class="text-[#727D80] hover:text-gray-400 font-aileron">Company</a>
+        <a href="/" class="text-[#727D80] hover:text-gray-400 font-aileron">Blog</a>
+    </div>
+</nav>
+
     <button class="bg-blue-500 text-white px-4 py-2 rounded" hx-target="#count" hx-post="/increment">Count</button>
     <div id="count" class="mt-4">
         {{ template "count" . }}
@@ -80,7 +86,6 @@
     {{ . }}
 </div>
 {{ end }}
-
 
 {{ block "editForm" . }}
 <!-- Create a form to edit the contact within a mother div so that we can replace the form with the not updated/updated contact -->
