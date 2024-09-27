@@ -17,6 +17,6 @@ func NewTemplates() *Templates {
 	return &Templates{
 		// template.Must: This is a helper function that ensures
 		// the template parsing is successful. If parsing fails, it will panic.
-		templates: template.Must(template.ParseGlob("templates/index.html")),
+		templates: template.Must(template.ParseGlob("templates/*.html")),
 	}
 }
