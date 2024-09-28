@@ -32,13 +32,21 @@ func main() {
 	products := &mod.Products{}
 
 	*contacts = append(*contacts, mod.Contact{ID: 1, Username: "John", Email: "johndoe@gmail.com"})
-	*products = append(*products, mod.Product{Id: 1, Name: "GTX 3090", Desc: "fezfezfeze", Price: 399.90})
+
+	// Create 4 products
+	*products = append(*products, *mod.CreateProduct("GTX 3090", "fezfezfeze", 399.90))
+	*products = append(*products, *mod.CreateProduct("GTX 3080", "fezfezfeze", 299.90))
+	*products = append(*products, *mod.CreateProduct("GTX 3070", "fezfezfeze", 199.90))
+	*products = append(*products, *mod.CreateProduct("GTX 3060", "fezfezfeze", 99.90))
+
+	// *products = append(*products, mod.Product{Id: 1, Name: "GTX 3090", Desc: "fezfezfeze", Price: 399.90})
 
 	router.Handle("/", md.DetailedLoggingMiddleware(handleIndex(tmpl, count, contacts)))
 	router.Handle("/contacts/", md.DetailedLoggingMiddleware(handlers.HandleContacts(tmpl, contacts)))
 	router.Handle("/increment", md.DetailedLoggingMiddleware(handleIncrement(tmpl, count)))
-	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	router.Handle("/products/", md.DetailedLoggingMiddleware(handlers.HandleProducts(tmpl, products)))
+
+	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	server := http.Server{
 		Addr:    "localhost:8080",

@@ -10,8 +10,7 @@ import (
 func HandleProducts(tmpl *templates.Templates, products *mod.Products) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			tmpl.ExecuteTemplate(w, "productsPage", nil)
-			tmpl.ExecuteTemplate(w, "displayProducts", products)
+			tmpl.ExecuteTemplate(w, "productsPage", products)
 		}
 	}
 }

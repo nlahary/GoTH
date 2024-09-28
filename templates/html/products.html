@@ -23,14 +23,20 @@
 {{ end }}
 
 {{ block "displayProducts" . }}
-        <!-- Display the products with 4 products per rows and centered -->
-    {{ if . }}
-        {{ range . | batch 4 }}
-        <div style="display: flex; justify-content: center;">
-            {{ range . }}
-                {{ template "product" . }}
+    <!-- Display the products with 4 products per row and centered -->
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+        {{ if . }}
+            {{ range batch . 4 }}
+            <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+                {{ range . }}
+                    <div style="flex: 0 1 calc(25% - 20px); min-width: 200px; max-width: 250px;">
+                        {{ template "product" . }}
+                    </div>
+                {{ end }}
+            </div>
             {{ end }}
-        </div>
-        {{ end}}
-    {{ end }}
+        {{ else }}
+            <p>No products available.</p>
+        {{ end }}
+    </div>
 {{ end }}
