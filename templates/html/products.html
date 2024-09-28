@@ -1,0 +1,36 @@
+{{ block "productsPage" . }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+    <title>Products</title>
+</head>
+<body>
+    {{ template "displayProducts" . }}
+</body>
+</html>
+{{ end }}
+
+{{ block "product" . }}
+    <div>
+        <h2>{{ .Name }}</h2>
+        <p>{{ .Desc }}</p>
+        <p>{{ .Price }}</p>
+        <button hx-post="/cart" hx-swap="outerHTML" hx-trigger="click" hx-target="#cart" hx-indicator=".loading">Add to Cart</button>
+    </div>
+{{ end }}
+
+{{ block "displayProducts" . }}
+        <!-- Display the products with 4 products per rows and centered -->
+    {{ if . }}
+        {{ range . | batch 4 }}
+        <div style="display: flex; justify-content: center;">
+            {{ range . }}
+                {{ template "product" . }}
+            {{ end }}
+        </div>
+        {{ end}}
+    {{ end }}
+{{ end }}
