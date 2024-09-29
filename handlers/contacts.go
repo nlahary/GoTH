@@ -5,17 +5,16 @@ import (
 	"net/http"
 	"strconv"
 
-	mod "github.com/Nathanael-FR/website/models"
+	models "github.com/Nathanael-FR/website/models"
 	templates "github.com/Nathanael-FR/website/templates"
 )
 
-func HandleContacts(tmpl *templates.Templates, contacts *mod.Contacts) http.HandlerFunc {
+func HandleContacts(tmpl *templates.Templates, contacts *models.Contacts) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received %s request for %s", r.Method, r.URL.Path)
+		switch r.Method {
 
-		// Two cases for a GET request : /contacts/{id} and /contacts/{id}/edit
-		if r.Method == http.MethodGet {
-
+		case http.MethodGet:
 			// Case: /contacts/{id}/edit
 			if r.URL.Path[len(r.URL.Path)-5:] == "/edit" {
 				idStr := r.URL.Path[len("/contacts/") : len(r.URL.Path)-5] // enlever "/edit"
@@ -25,16 +24,15 @@ func HandleContacts(tmpl *templates.Templates, contacts *mod.Contacts) http.Hand
 					http.Error(w, "Invalid ID", http.StatusBadRequest)
 					return
 				}
-				for _, contact := range *contacts {
-					if contact.ID == id {
-						// Case: /contacts/{id}/edit
-						log.Println("Editing contact:", contact)
-						// w.Header().Set("Content-Type", "text/html")
-						tmpl.ExecuteTemplate(w, "editForm", contact)
-						return
-					}
+
+				contact, err := contacts.GetContactByID(id)
+				if err != nil {
+					log.Println("Error getting contact:", contact)
+					http.Error(w, "Contact not found", http.StatusNotFound)
+					return
 				}
-				http.Error(w, "Contact not found", http.StatusNotFound)
+				tmpl.ExecuteTemplate(w, "editForm", contact)
+
 				return
 
 			} else {
@@ -47,38 +45,33 @@ func HandleContacts(tmpl *templates.Templates, contacts *mod.Contacts) http.Hand
 					http.Error(w, "Invalid ID", http.StatusBadRequest)
 					return
 				}
-				for _, contact := range *contacts {
-					if contact.ID == id {
-						log.Println("Displaying contact:", contact)
-						tmpl.ExecuteTemplate(w, "user", contact)
-						return
-					}
-
+				contact, err := contacts.GetContactByID(id)
+				if err != nil {
+					log.Println("Error getting contact:", contact)
+					http.Error(w, "Contact not found", http.StatusNotFound)
+					return
 				}
-				http.Error(w, "Contact not found", http.StatusNotFound)
+				log.Println("Displaying contact:", contact)
+				tmpl.ExecuteTemplate(w, "user", contact)
 				return
 			}
 
-		}
+		case http.MethodPost:
 
-		if r.Method == http.MethodPost {
 			username := r.FormValue("name")
 			email := r.FormValue("email")
-			newContact := mod.CreateContact(username, email)
-
-			if newContact.Exists(*contacts) {
-				w.WriteHeader(http.StatusUnprocessableEntity)
-				tmpl.ExecuteTemplate(w, "error", "User already exists")
+			newContact := models.Contact{Username: username, Email: email}
+			err := contacts.InsertContact(&newContact)
+			if err != nil {
+				log.Println("Error inserting contact:", err)
+				http.Error(w, "Error inserting contact", http.StatusInternalServerError)
 				return
 			}
 			log.Println("Contact created:", newContact)
-			*contacts = append(*contacts, *newContact)
-
 			tmpl.ExecuteTemplate(w, "user", newContact)
 			return
-		}
 
-		if r.Method == http.MethodDelete {
+		case http.MethodDelete:
 			idStr := r.URL.Path[len("/contacts/"):]
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
@@ -86,7 +79,7 @@ func HandleContacts(tmpl *templates.Templates, contacts *mod.Contacts) http.Hand
 				http.Error(w, "Invalid ID", http.StatusBadRequest)
 				return
 			}
-			err = mod.DeleteContact(id, contacts)
+			err = contacts.DeleteContact(id)
 			if err != nil {
 				log.Println("Error deleting contact:", err)
 				http.Error(w, err.Error(), http.StatusNotFound)
@@ -95,9 +88,9 @@ func HandleContacts(tmpl *templates.Templates, contacts *mod.Contacts) http.Hand
 			log.Println("Contact deleted:", id)
 			w.WriteHeader(http.StatusOK) // Change to 200 so that the fetch API doesn't throw an error
 			return
-		}
 
-		if r.Method == http.MethodPut {
+		case http.MethodPut:
+
 			idStr := r.URL.Path[len("/contacts/"):]
 			id, err := strconv.Atoi(idStr)
 			if err != nil {
@@ -107,24 +100,23 @@ func HandleContacts(tmpl *templates.Templates, contacts *mod.Contacts) http.Hand
 			}
 			username := r.FormValue("name")
 			email := r.FormValue("email")
-			if mod.UsernameOrEmailIsTaken(id, username, email, *contacts) {
+			contact := models.Contact{ID: id, Username: username, Email: email}
+			err = contacts.UpdateContact(&contact)
+			if err != nil {
+				log.Println("Error updating contact:", err)
 				w.WriteHeader(http.StatusUnprocessableEntity)
 				tmpl.ExecuteTemplate(w, "error", "User already exists")
 				return
 			}
-			for i, contact := range *contacts {
-				if contact.ID == id {
-					(*contacts)[i].Update(username, email)
-					log.Println("Contact modified.")
-					tmpl.ExecuteTemplate(w, "user", (*contacts)[i])
-					return
-				}
-			}
-			http.Error(w, "Contact not found", http.StatusNotFound)
+			log.Println("Contact modified.")
+			tmpl.ExecuteTemplate(w, "user", contact)
+			return
+
+		default:
+
+			log.Printf("Unhandled method: %s", r.Method)
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-
-		log.Printf("Unhandled method: %s", r.Method)
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
