@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type CartStatus string
 
@@ -25,6 +28,14 @@ type Cart struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Status    CartStatus
+}
+
+type Carts struct {
+	db *sql.DB
+}
+
+func NewCarts(db *sql.DB) *Carts {
+	return &Carts{db: db}
 }
 
 func (c *Cart) AddItem(productID, quantity int, price float64) {
