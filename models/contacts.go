@@ -26,7 +26,7 @@ func NewContacts(db *sql.DB) *Contacts {
 }
 
 func (c *Contacts) InsertContact(contact *Contact) error {
-	_, err := c.db.Exec("INSERT INTO contacts (username, email) VALUES (username, email)", contact.Username, contact.Email)
+	_, err := c.db.Exec("INSERT INTO contacts (username, email) VALUES (?, ?)", contact.Username, contact.Email)
 	return err
 }
 

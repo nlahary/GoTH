@@ -53,6 +53,7 @@ func handleIndex(tmpl *templates.Templates, contacts *mod.Contacts) http.Handler
 			http.Error(w, "Error getting contacts", http.StatusInternalServerError)
 			return
 		}
+		tmpl.ExecuteTemplate(w, "index", AllContacts)
 		tmpl.ExecuteTemplate(w, "display", AllContacts)
 	}
 }

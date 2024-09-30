@@ -20,7 +20,7 @@
 </head>
 <body class="bg-[#142E36] p-4">
 
-    {{ template "navbar" . }}
+    {{ template "navbar" }}
 
     <form class="mt-4" hx-post="/contacts/" hx-target="#display" hx-swap="afterend" hx-on::after-request="if(event.detail.successful) this.reset()" hx-indicator="#error-container"> 
         <div class="mb-4">

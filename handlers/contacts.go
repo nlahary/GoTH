@@ -64,7 +64,9 @@ func HandleContacts(tmpl *templates.Templates, contacts *models.Contacts) http.H
 			err := contacts.InsertContact(&newContact)
 			if err != nil {
 				log.Println("Error inserting contact:", err)
-				http.Error(w, "Error inserting contact", http.StatusInternalServerError)
+				w.WriteHeader(http.StatusUnprocessableEntity)
+				tmpl.ExecuteTemplate(w, "error", "User already exists")
+				// http.Error(w, "Error inserting contact", http.StatusInternalServerError)
 				return
 			}
 			log.Println("Contact created:", newContact)
