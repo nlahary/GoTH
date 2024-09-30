@@ -30,10 +30,12 @@ func main() {
 	tmpl := templates.NewTemplates()
 
 	contactsDB := mod.NewContacts(db)
+	productsDB := mod.NewProducts(db)
 
 	router.Handle("/", md.DetailedLoggingMiddleware(handleIndex(tmpl, contactsDB)))
 	router.Handle("/contacts/", md.DetailedLoggingMiddleware(handlers.HandleContacts(tmpl, contactsDB)))
-	// router.Handle("/products/", md.DetailedLoggingMiddleware(handlers.HandleProducts(tmpl, products)))
+	router.Handle("/products/", md.DetailedLoggingMiddleware(handlers.HandleProducts(tmpl, productsDB)))
+	// router.Handlet("/cart/", md.DetailedLoggingMiddleware(handlers.HandleCart(tmpl, productsDB)))
 	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	server := http.Server{

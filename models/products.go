@@ -1,5 +1,10 @@
 package models
 
+import (
+	"database/sql"
+	"log"
+)
+
 type Product struct {
 	Id    int
 	Name  string
@@ -7,23 +12,55 @@ type Product struct {
 	Price float32
 }
 
-type Products = []Product
-
-var ProductIDcount = 1
-
-func genProductID() int {
-	ProductIDcount++
-	return ProductIDcount
+type Products struct {
+	db *sql.DB
 }
 
-func CreateProduct(name, desc string, price float32) *Product {
-	id := genProductID()
-	return &Product{
-		Id:    id,
-		Name:  name,
-		Desc:  desc,
-		Price: price,
+func NewProducts(db *sql.DB) *Products {
+	return &Products{db: db}
+}
+
+func (p *Products) InsertProduct(product *Product) error {
+	_, err := p.db.Exec("INSERT INTO products (name, description, price) VALUES (?, ?, ?)", product.Name, product.Desc, product.Price)
+	return err
+}
+
+func (p *Products) GetAllProducts() ([]Product, error) {
+	rows, err := p.db.Query("SELECT id, name, desc, price FROM products")
+	if err != nil {
+		log.Println("Error getting products:", err)
+		return nil, err
 	}
+	defer rows.Close()
+
+	var products []Product
+	for rows.Next() {
+		var product Product
+		if err := rows.Scan(&product.Id, &product.Name, &product.Desc, &product.Price); err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+	return products, nil
+}
+
+func (p *Products) GetProductByID(id int) (*Product, error) {
+	var product Product
+	err := p.db.QueryRow("SELECT id, name, description, price FROM products WHERE id = ?", id).Scan(&product.Id, &product.Name, &product.Desc, &product.Price)
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
+}
+
+func (p *Products) UpdateProduct(product *Product) error {
+	_, err := p.db.Exec("UPDATE products SET name = ?, description = ?, price = ? WHERE id = ?", product.Name, product.Desc, product.Price, product.Id)
+	return err
+}
+
+func (p *Products) DeleteProduct(id int) error {
+	_, err := p.db.Exec("DELETE FROM products WHERE id = ?", id)
+	return err
 }
 
 func BatchProducts(items []Product, size int) [][]Product {
