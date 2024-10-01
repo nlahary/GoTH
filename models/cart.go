@@ -2,6 +2,8 @@ package models
 
 import (
 	"database/sql"
+	"errors"
+	"log"
 	"time"
 )
 
@@ -38,27 +40,41 @@ func NewCarts(db *sql.DB) *Carts {
 	return &Carts{db: db}
 }
 
-func (c *Cart) AddItem(productID, quantity int, price float64) {
-	for i, item := range c.Items {
-		if item.ProductID == productID {
-			c.Items[i].Quantity += 1
-			c.Items[i].Price += price
-			return
-		}
+func (c *Carts) CreateCart(userID int) error {
+	_, err := c.db.Exec("INSERT INTO carts (user_id, status) VALUES (?, ?)", userID, CartStatusActive)
+	if err != nil {
+		log.Println("Error creating cart:", err)
+		return err
 	}
-	c.Items = append(c.Items, CartItem{
-		ProductID: productID,
-		Quantity:  quantity,
-		Price:     price,
-		AddedAt:   time.Now(),
-	})
+	return err
 }
 
-func (c *Cart) RemoveItem(productID int) {
-	for i, item := range c.Items {
-		if item.ProductID == productID {
-			c.Items = append(c.Items[:i], c.Items[i+1:]...)
-			return
-		}
+func (c *Carts) AddItem(p Product, u Contact, quantity int) error {
+	cartId, err := c.GetCartID(u.Id)
+	if err != nil {
+		return err
 	}
+	_, err = c.db.Exec("INSERT INTO cartItems (cart_id, product_id, quantity, price) VALUES (?, ?, ?, ?)", cartId, p.Id, quantity, p.Price)
+	return err
+}
+
+func (c *Carts) GetCartID(userID int) (int, error) {
+	var cartID int
+	err := c.db.QueryRow("SELECT id FROM carts WHERE user_id = ? AND status = 'active'", userID).Scan(&cartID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, errors.New("cart not found")
+		}
+		return 0, err
+	}
+	return cartID, nil
+}
+
+func (c *Carts) RemoveItem(userID, productID int) error {
+	cartID, err := c.GetCartID(userID)
+	if err != nil {
+		return err
+	}
+	_, err = c.db.Exec("DELETE FROM cartItems WHERE cart_id = ? AND product_id = ?", cartID, productID)
+	return err
 }

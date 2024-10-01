@@ -31,11 +31,19 @@ func main() {
 
 	contactsDB := mod.NewContacts(db)
 	productsDB := mod.NewProducts(db)
+	cartsDB := mod.NewCarts(db)
+
+	// Mock user for now by using the first contact in the database
+	guestUser := &mod.Contact{}
+	err = db.QueryRow("SELECT id, username, email FROM contacts LIMIT 1").Scan(&guestUser.Id, &guestUser.Username, &guestUser.Email)
+	if err != nil {
+		log.Println("Error fetching guest user:", err)
+	}
 
 	router.Handle("/", md.DetailedLoggingMiddleware(handleIndex(tmpl, contactsDB)))
 	router.Handle("/contacts/", md.DetailedLoggingMiddleware(handlers.HandleContacts(tmpl, contactsDB)))
 	router.Handle("/products/", md.DetailedLoggingMiddleware(handlers.HandleProducts(tmpl, productsDB)))
-	// router.Handlet("/cart/", md.DetailedLoggingMiddleware(handlers.HandleCart(tmpl, productsDB)))
+	router.Handle("/cart/", md.DetailedLoggingMiddleware(handlers.HandleCart(tmpl, cartsDB, productsDB, guestUser)))
 	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	server := http.Server{
@@ -55,6 +63,8 @@ func handleIndex(tmpl *templates.Templates, contacts *mod.Contacts) http.Handler
 			http.Error(w, "Error getting contacts", http.StatusInternalServerError)
 			return
 		}
+		log.Println("Retrieved a total of", len(AllContacts), "contacts")
+		log.Println(AllContacts)
 		tmpl.ExecuteTemplate(w, "index", AllContacts)
 		tmpl.ExecuteTemplate(w, "display", AllContacts)
 	}

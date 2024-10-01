@@ -6,7 +6,7 @@ import (
 )
 
 type Contact struct {
-	ID       int
+	Id       int
 	Username string
 	Email    string
 }
@@ -30,6 +30,16 @@ func (c *Contacts) InsertContact(contact *Contact) error {
 	return err
 }
 
+func (c *Contacts) UpdateContact(contact *Contact) error {
+	_, err := c.db.Exec("UPDATE contacts SET username = ?, email = ? WHERE id = ?", contact.Username, contact.Email, contact.Id)
+	return err
+}
+
+func (c *Contacts) DeleteContact(id int) error {
+	_, err := c.db.Exec("DELETE FROM contacts WHERE id = ?", id)
+	return err
+}
+
 func (c *Contacts) GetAllContacts() ([]Contact, error) {
 	rows, err := c.db.Query("SELECT id, username, email FROM contacts")
 	if err != nil {
@@ -40,7 +50,7 @@ func (c *Contacts) GetAllContacts() ([]Contact, error) {
 	var contacts []Contact
 	for rows.Next() {
 		var contact Contact
-		if err := rows.Scan(&contact.ID, &contact.Username, &contact.Email); err != nil {
+		if err := rows.Scan(&contact.Id, &contact.Username, &contact.Email); err != nil {
 			return nil, err
 		}
 		contacts = append(contacts, contact)
@@ -50,7 +60,7 @@ func (c *Contacts) GetAllContacts() ([]Contact, error) {
 
 func (c *Contacts) GetContactByID(id int) (*Contact, error) {
 	var contact Contact
-	err := c.db.QueryRow("SELECT id, username, email FROM contacts WHERE id = ?", id).Scan(&contact.ID, &contact.Username, &contact.Email)
+	err := c.db.QueryRow("SELECT id, username, email FROM contacts WHERE id = ?", id).Scan(&contact.Id, &contact.Username, &contact.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("contact not found")
@@ -62,7 +72,7 @@ func (c *Contacts) GetContactByID(id int) (*Contact, error) {
 
 func (c *Contacts) GetContactByEmail(email string) (*Contact, error) {
 	var contact Contact
-	err := c.db.QueryRow("SELECT id, username, email FROM contacts WHERE email = ?", email).Scan(&contact.ID, &contact.Username, &contact.Email)
+	err := c.db.QueryRow("SELECT id, username, email FROM contacts WHERE email = ?", email).Scan(&contact.Id, &contact.Username, &contact.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("contact not found")
@@ -70,14 +80,4 @@ func (c *Contacts) GetContactByEmail(email string) (*Contact, error) {
 		return nil, err
 	}
 	return &contact, nil
-}
-
-func (c *Contacts) UpdateContact(contact *Contact) error {
-	_, err := c.db.Exec("UPDATE contacts SET username = ?, email = ? WHERE id = ?", contact.Username, contact.Email, contact.ID)
-	return err
-}
-
-func (c *Contacts) DeleteContact(id int) error {
-	_, err := c.db.Exec("DELETE FROM contacts WHERE id = ?", id)
-	return err
 }

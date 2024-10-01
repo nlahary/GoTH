@@ -108,7 +108,7 @@ func HandleContacts(tmpl *templates.Templates, contacts *models.Contacts) http.H
 			}
 			username := r.FormValue("name")
 			email := r.FormValue("email")
-			contact := models.Contact{ID: id, Username: username, Email: email}
+			contact := models.Contact{Id: id, Username: username, Email: email}
 			err = contacts.UpdateContact(&contact)
 			if err != nil {
 				log.Println("Error updating contact:", err)

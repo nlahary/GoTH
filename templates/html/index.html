@@ -48,13 +48,13 @@
 {{ end }}
 
 {{ block "user" . }}
-<div id="user-{{ .ID }}" class="p-4 bg-white shadow rounded mb-4" hx-target="this" hx-swap="outerHTML">
+<div id="user-{{ .Id }}" class="p-4 bg-white shadow rounded mb-4" hx-target="this" hx-swap="outerHTML">
     <div class="mb-2"> <label class="font-bold"> Name </label>: {{ .Username}}</div>
     <div class="mb-2"> <label class="font-bold"> Email </label>: {{ .Email}}</div>
     <button 
         class="bg-red-500 text-white px-4 py-2 rounded"
-        hx-delete="/contacts/{{ .ID }}"
-        hx-target="#user-{{ .ID }}" 
+        hx-delete="/contacts/{{ .Id }}"
+        hx-target="#user-{{ .Id }}" 
         hx-swap="outerHTML">
     Delete
     </button>
@@ -72,7 +72,7 @@
 {{ block "editForm" . }}
 <!-- Create a form to edit the contact within a mother div so that we can replace the form with the not updated/updated contact -->
 <div id="edit-form-container" class="p-4 bg-white shadow rounded mb-4"> 
-    <form hx-put="/contacts/{{ .ID }}" hx-target="#edit-form-container" hx-swap="outerHTML" class="space-y-4">
+    <form hx-put="/contacts/{{ .Id }}" hx-target="#edit-form-container" hx-swap="outerHTML" class="space-y-4">
         <div>
             <label for="name" class="block text-gray-700">Name</label>
             <input type="text" name="name" value="{{ .Username }}" class="border rounded w-full py-2 px-3">
@@ -83,7 +83,7 @@
         </div>
         <div class="flex space-x-4">
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
-            <button hx-get="/contacts/{{ .ID }}" hx-target="#edit-form-container" hx-swap="outerHTML" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+            <button hx-get="/contacts/{{ .Id }}" hx-target="#edit-form-container" hx-swap="outerHTML" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
         </div>
     </form>
 </div>
