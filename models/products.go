@@ -21,7 +21,7 @@ func NewProducts(db *sql.DB) *Products {
 }
 
 func (p *Products) InsertProduct(product *Product) error {
-	_, err := p.db.Exec("INSERT INTO products (name, description, price) VALUES (?, ?, ?)", product.Name, product.Desc, product.Price)
+	_, err := p.db.Exec("INSERT INTO products (name, desc, price) VALUES (?, ?, ?)", product.Name, product.Desc, product.Price)
 	return err
 }
 
@@ -46,7 +46,7 @@ func (p *Products) GetAllProducts() ([]Product, error) {
 
 func (p *Products) GetProductByID(id int) (*Product, error) {
 	var product Product
-	err := p.db.QueryRow("SELECT id, name, description, price FROM products WHERE id = ?", id).Scan(&product.Id, &product.Name, &product.Desc, &product.Price)
+	err := p.db.QueryRow("SELECT id, name, desc, price FROM products WHERE id = ?", id).Scan(&product.Id, &product.Name, &product.Desc, &product.Price)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (p *Products) GetProductByID(id int) (*Product, error) {
 }
 
 func (p *Products) UpdateProduct(product *Product) error {
-	_, err := p.db.Exec("UPDATE products SET name = ?, description = ?, price = ? WHERE id = ?", product.Name, product.Desc, product.Price, product.Id)
+	_, err := p.db.Exec("UPDATE products SET name = ?, desc = ?, price = ? WHERE id = ?", product.Name, product.Desc, product.Price, product.Id)
 	return err
 }
 

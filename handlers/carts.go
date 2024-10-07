@@ -23,13 +23,7 @@ func HandleCart(tmpl *templates.Templates, carts *models.Carts, products *models
 				http.Error(w, "Invalid ID", http.StatusBadRequest)
 				return
 			}
-			quantity := r.FormValue("quantity")
-			quantityInt, err := strconv.Atoi(quantity)
-			if err != nil {
-				log.Println("Error converting quantity to int:", err)
-				http.Error(w, "Invalid quantity", http.StatusBadRequest)
-				return
-			}
+			quantityInt := 1
 
 			product, err := products.GetProductByID(ProductId)
 			if err != nil {
@@ -37,12 +31,13 @@ func HandleCart(tmpl *templates.Templates, carts *models.Carts, products *models
 				http.Error(w, "Product not found", http.StatusNotFound)
 				return
 			}
-			err = carts.AddItem(*product, *user, quantityInt)
+			numProducts, err := carts.AddItem(*product, *user, quantityInt)
 			if err != nil {
 				log.Println("Error adding item to cart:", err)
 				http.Error(w, "Error adding item to cart", http.StatusInternalServerError)
 				return
 			}
+			tmpl.ExecuteTemplate(w, "cartCounter", numProducts)
 		}
 
 	}

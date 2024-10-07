@@ -2,17 +2,16 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"log"
 	"time"
 )
 
-type CartStatus string
+type CartStatus int
 
 const (
-	CartStatusActive    CartStatus = "active"
-	CartStatusAbandoned CartStatus = "abandoned"
-	CartStatusCompleted CartStatus = "completed"
+	CartStatusActive    CartStatus = 1
+	CartStatusAbandoned CartStatus = 2
+	CartStatusCompleted CartStatus = 3
 )
 
 type CartItem struct {
@@ -41,33 +40,57 @@ func NewCarts(db *sql.DB) *Carts {
 }
 
 func (c *Carts) CreateCart(userID int) error {
-	_, err := c.db.Exec("INSERT INTO carts (user_id, status) VALUES (?, ?)", userID, CartStatusActive)
+
+	_, err := c.db.Exec("INSERT INTO carts (user_id, status_id) VALUES (?, ?)", userID, CartStatusActive)
 	if err != nil {
-		log.Println("Error creating cart:", err)
+		log.Println("Error creating new cart:", err)
 		return err
 	}
 	return err
 }
 
-func (c *Carts) AddItem(p Product, u Contact, quantity int) error {
+// Add a product to the cart and return the total number of items in the cart
+func (c *Carts) AddItem(p Product, u Contact, quantity int) (int, error) {
 	cartId, err := c.GetCartID(u.Id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	_, err = c.db.Exec("INSERT INTO cartItems (cart_id, product_id, quantity, price) VALUES (?, ?, ?, ?)", cartId, p.Id, quantity, p.Price)
-	return err
+	if err != nil {
+		log.Println("Error adding item to cart:", err)
+	}
+	numItems, err := c.GetNumItems(cartId)
+	return numItems, err
 }
 
 func (c *Carts) GetCartID(userID int) (int, error) {
 	var cartID int
-	err := c.db.QueryRow("SELECT id FROM carts WHERE user_id = ? AND status = 'active'", userID).Scan(&cartID)
+	err := c.db.QueryRow("SELECT id FROM carts WHERE user_id = ? AND status_id = 1", userID).Scan(&cartID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, errors.New("cart not found")
+			log.Println("No active cart found for user:", userID)
+			log.Println("Creating new cart for user:", userID)
+			err = c.CreateCart(userID)
+			if err != nil {
+				return 0, err
+			}
+			carID, err := c.GetCartID(userID)
+			return carID, err
 		}
 		return 0, err
 	}
 	return cartID, nil
+}
+
+func (c *Carts) GetNumItems(cartId int) (int, error) {
+
+	var numItems int
+	err := c.db.QueryRow("SELECT COUNT(*) FROM cartItems WHERE cart_id = ?", cartId).Scan(&numItems)
+	if err != nil {
+		log.Println("Error getting number of items in cart:", err)
+		return 0, err
+	}
+	return numItems, err
 }
 
 func (c *Carts) RemoveItem(userID, productID int) error {

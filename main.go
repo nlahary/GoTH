@@ -63,8 +63,6 @@ func handleIndex(tmpl *templates.Templates, contacts *mod.Contacts) http.Handler
 			http.Error(w, "Error getting contacts", http.StatusInternalServerError)
 			return
 		}
-		log.Println("Retrieved a total of", len(AllContacts), "contacts")
-		log.Println(AllContacts)
 		tmpl.ExecuteTemplate(w, "index", AllContacts)
 		tmpl.ExecuteTemplate(w, "display", AllContacts)
 	}

@@ -5,11 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
     <title>Products</title>
 </head>
 <body class="bg-[#142E36] p-4">
-    {{ template "navbar" . }}
+    {{ template "navbar" }}
     {{ template "displayProducts" . }}
 </body>
 </html>
@@ -20,7 +21,14 @@
         <h2>{{ .Name }}</h2>
         <p>{{ .Desc }}</p>
         <p>{{ .Price }}</p>
-        <button hx-post="/cart" hx-swap="outerHTML" hx-trigger="click" hx-target="#cart" hx-indicator=".loading">Add to Cart</button>
+        <button 
+        hx-post="/cart/{{ .Id }}"
+        hx-swap="innerHTML" 
+        hx-trigger="click" 
+        hx-indicator=".loading"
+        hx-target="#cart-counter"
+        >
+        Add to Cart</button>
     </div>
 {{ end }}
 

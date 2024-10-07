@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	models "github.com/Nathanael-FR/website/models"
@@ -11,12 +12,13 @@ func HandleProducts(tmpl *templates.Templates, products *models.Products) http.H
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 
-			products, err := products.GetAllProducts()
+			productsList, err := products.GetAllProducts()
+			log.Println(productsList)
 			if err != nil {
 				http.Error(w, "Error getting products", http.StatusInternalServerError)
 				return
 			}
-			tmpl.ExecuteTemplate(w, "productsPage", products)
+			tmpl.ExecuteTemplate(w, "productsPage", productsList)
 		}
 	}
 }

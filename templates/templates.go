@@ -2,6 +2,7 @@ package templates
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 
 	mod "github.com/Nathanael-FR/website/models"
@@ -12,7 +13,11 @@ type Templates struct {
 }
 
 func (t *Templates) ExecuteTemplate(w http.ResponseWriter, name string, data interface{}) {
-	t.templates.ExecuteTemplate(w, name, data)
+	err := t.templates.ExecuteTemplate(w, name, data)
+	if err != nil {
+		log.Println("Error executing template", name, ":", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 func NewTemplates() *Templates {
