@@ -14,6 +14,7 @@ import (
 
 func main() {
 
+	// Open a database connection
 	db, err := sql.Open("sqlite3", "./app.db")
 	if err != nil {
 		log.Fatal(err)
@@ -29,21 +30,16 @@ func main() {
 	// These placeholders are replaced with actual values when the template is executed.
 	tmpl := templates.NewTemplates()
 
+	// Create instances of DB models
+	// These instances will be used to interact with the database
 	contactsDB := mod.NewContacts(db)
 	productsDB := mod.NewProducts(db)
 	cartsDB := mod.NewCarts(db)
 
-	// Mock user for now by using the first contact in the database
-	guestUser := &mod.Contact{}
-	err = db.QueryRow("SELECT id, username, email FROM contacts LIMIT 1").Scan(&guestUser.Id, &guestUser.Username, &guestUser.Email)
-	if err != nil {
-		log.Println("Error fetching guest user:", err)
-	}
-
 	router.Handle("/", md.DetailedLoggingMiddleware(handleIndex(tmpl, contactsDB)))
 	router.Handle("/contacts/", md.DetailedLoggingMiddleware(handlers.HandleContacts(tmpl, contactsDB)))
 	router.Handle("/products/", md.DetailedLoggingMiddleware(handlers.HandleProducts(tmpl, productsDB)))
-	router.Handle("/cart/", md.DetailedLoggingMiddleware(handlers.HandleCart(tmpl, cartsDB, productsDB, guestUser)))
+	router.Handle("/cart/", md.DetailedLoggingMiddleware(handlers.HandleCart(tmpl, cartsDB, productsDB, contactsDB)))
 	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	server := http.Server{
@@ -56,6 +52,7 @@ func main() {
 }
 
 func handleIndex(tmpl *templates.Templates, contacts *mod.Contacts) http.HandlerFunc {
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		AllContacts, err := contacts.GetAllContacts()
 		if err != nil {

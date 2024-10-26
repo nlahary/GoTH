@@ -3,13 +3,23 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"log"
 )
 
 type Contact struct {
 	Id       int
+	Uuid     string
 	Username string
 	Email    string
+	Status   ContactStatus
 }
+
+type ContactStatus int
+
+const (
+	ContactStatusGuest ContactStatus = 0
+	ContactStatusUser  ContactStatus = 1
+)
 
 // Contacts is a struct that represents a collection of contacts.
 // It has a field db of type *sql.DB, which is a pointer to a sql.DB struct.
@@ -25,9 +35,19 @@ func NewContacts(db *sql.DB) *Contacts {
 	return &Contacts{db: db}
 }
 
-func (c *Contacts) InsertContact(contact *Contact) error {
-	_, err := c.db.Exec("INSERT INTO contacts (username, email) VALUES (?, ?)", contact.Username, contact.Email)
-	return err
+func (c *Contacts) InsertContact(contact *Contact) (int, error) {
+	result, err := c.db.Exec(
+		"INSERT INTO contacts (uuid, username, email, status) VALUES (?, ?, ?, ?)",
+		contact.Uuid, contact.Username, contact.Email, contact.Status)
+	if err != nil {
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	log.Println("New contact inserted with ID:", id)
+	return int(id), nil
 }
 
 func (c *Contacts) UpdateContact(contact *Contact) error {

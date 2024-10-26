@@ -60,8 +60,8 @@ func HandleContacts(tmpl *templates.Templates, contacts *models.Contacts) http.H
 
 			username := r.FormValue("name")
 			email := r.FormValue("email")
-			newContact := &models.Contact{Username: username, Email: email}
-			err := contacts.InsertContact(newContact)
+			newContact := &models.Contact{Username: username, Email: email, Status: models.ContactStatusUser, Uuid: ""}
+			userId, err := contacts.InsertContact(newContact)
 			if err != nil {
 				log.Println("Error inserting contact:", err)
 				w.WriteHeader(http.StatusUnprocessableEntity)
@@ -69,7 +69,7 @@ func HandleContacts(tmpl *templates.Templates, contacts *models.Contacts) http.H
 				// http.Error(w, "Error inserting contact", http.StatusInternalServerError)
 				return
 			}
-			newContact, err = contacts.GetContactByEmail(email)
+			newContact, err = contacts.GetContactByID(userId)
 			if err != nil {
 				log.Println("Error getting contact:", err)
 				http.Error(w, "Error getting contact", http.StatusInternalServerError)

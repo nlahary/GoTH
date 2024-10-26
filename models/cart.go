@@ -39,23 +39,24 @@ func NewCarts(db *sql.DB) *Carts {
 	return &Carts{db: db}
 }
 
-func (c *Carts) CreateCart(userID int) error {
-
-	_, err := c.db.Exec("INSERT INTO carts (user_id, status_id) VALUES (?, ?)", userID, CartStatusActive)
+func (c *Carts) CreateCart(userID int) (int, error) {
+	result, err := c.db.Exec("INSERT INTO carts (user_id, status_id) VALUES (?, ?)", userID, CartStatusActive)
 	if err != nil {
 		log.Println("Error creating new cart:", err)
-		return err
+		return 0, err
 	}
-	return err
+	cartID, err := result.LastInsertId()
+	if err != nil {
+		log.Println("Error getting new cart ID:", err)
+		return 0, err
+	}
+	return int(cartID), nil
 }
 
 // Add a product to the cart and return the total number of items in the cart
-func (c *Carts) AddItem(p Product, u Contact, quantity int) (int, error) {
-	cartId, err := c.GetCartID(u.Id)
-	if err != nil {
-		return 0, err
-	}
-	_, err = c.db.Exec("INSERT INTO cartItems (cart_id, product_id, quantity, price) VALUES (?, ?, ?, ?)", cartId, p.Id, quantity, p.Price)
+func (c *Carts) AddItem(p Product, cartId string, quantity int) (int, error) {
+
+	_, err := c.db.Exec("INSERT INTO cartItems (cart_id, product_id, quantity, price) VALUES (?, ?, ?, ?)", cartId, p.Id, quantity, p.Price)
 	if err != nil {
 		log.Println("Error adding item to cart:", err)
 	}
@@ -70,19 +71,19 @@ func (c *Carts) GetCartID(userID int) (int, error) {
 		if err == sql.ErrNoRows {
 			log.Println("No active cart found for user:", userID)
 			log.Println("Creating new cart for user:", userID)
-			err = c.CreateCart(userID)
+			cartId, err := c.CreateCart(userID)
 			if err != nil {
 				return 0, err
 			}
-			carID, err := c.GetCartID(userID)
-			return carID, err
+			return cartId, err
 		}
+		log.Println("Error getting cart ID:", err)
 		return 0, err
 	}
 	return cartID, nil
 }
 
-func (c *Carts) GetNumItems(cartId int) (int, error) {
+func (c *Carts) GetNumItems(cartId string) (int, error) {
 
 	var numItems int
 	err := c.db.QueryRow("SELECT COUNT(*) FROM cartItems WHERE cart_id = ?", cartId).Scan(&numItems)

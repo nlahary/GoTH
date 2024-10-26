@@ -19,6 +19,7 @@ func HandleProducts(tmpl *templates.Templates, products *models.Products) http.H
 				return
 			}
 			tmpl.ExecuteTemplate(w, "productsPage", productsList)
+			tmpl.ExecuteTemplate(w, "cartCounter", 0)
 		}
 	}
 }
