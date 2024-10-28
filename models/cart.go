@@ -126,7 +126,14 @@ func GetCartRedis(cartID string, redisClient *redis.Client, ctx context.Context)
 
 func AddToCartRedis(cartID, productID string, quantity int, redisClient *redis.Client, ctx context.Context) error {
 	cartKey := "cart:" + cartID
-	err := redisClient.HSet(ctx, cartKey, productID, quantity).Err()
+	// Check if item already exists in cart
+	item, err := GetItemByIdRedis(cartID, productID, redisClient, ctx)
+	if err != nil {
+		log.Println("Error getting item by id from Redis:", err)
+	}
+	newQuantity := item.Quantity + quantity
+
+	err = redisClient.HSet(ctx, cartKey, productID, newQuantity).Err()
 	if err != nil {
 		log.Println("Error adding item to cart in Redis:", err)
 	}
@@ -152,8 +159,26 @@ func GetItemsInCartRedis(cartID string, redisClient *redis.Client, ctx context.C
 		}
 		items = append(items, CartItem{ProductID: productIDInt, Quantity: quantityInt})
 	}
-	log.Println("Items in cart:", items)
+	for _, item := range items {
+		println("ItemID: ", item.ProductID, " Quantity: ", item.Quantity)
+	}
 	return items, nil
+}
+
+func GetTotalNbItemsInCartRedis(cartID string, redisClient *redis.Client, ctx context.Context) (int, error) {
+	cart, err := GetCartRedis(cartID, redisClient, ctx)
+	if err != nil {
+		return 0, err
+	}
+	var totalItems int
+	for _, quantityStr := range cart {
+		quantityInt, err := strconv.Atoi(quantityStr)
+		if err != nil {
+			log.Println("Error converting quantity to int:", err)
+		}
+		totalItems += quantityInt
+	}
+	return totalItems, nil
 }
 
 func GetItemByIdRedis(cartID, productID string, redisClient *redis.Client, ctx context.Context) (CartItem, error) {

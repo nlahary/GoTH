@@ -60,14 +60,13 @@ func HandleCart(
 			}
 
 			// Add item to cart in SQLite
-			numProducts, err := carts.AddItem(*product, cartId, quantityInt)
-			log.Println("numProducts:", numProducts)
+			_, err = carts.AddItem(*product, cartId, quantityInt)
 			if err != nil {
 				log.Println("Error adding item to cart:", err)
 				http.Error(w, "Error adding item to cart", http.StatusInternalServerError)
 				return
 			}
-			numProducts = 1
+			numProducts, _ := models.GetTotalNbItemsInCartRedis(cartId, redisClient, ctx)
 			tmpl.ExecuteTemplate(w, "cartCounter", numProducts)
 		}
 
