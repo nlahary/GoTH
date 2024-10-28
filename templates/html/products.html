@@ -10,8 +10,8 @@
     <title>Products</title>
 </head>
 <body class="bg-[#142E36] p-4">
-    {{ template "navbar" }}
-    {{ template "displayProducts" . }}
+    {{ template "navbar" .CartCount }}
+    {{ template "displayProducts" .ProductsList }}
 </body>
 </html>
 {{ end }}

@@ -1,9 +1,13 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"log"
+	"strconv"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type CartStatus int
@@ -39,6 +43,8 @@ func NewCarts(db *sql.DB) *Carts {
 	return &Carts{db: db}
 }
 
+// Sqlite functions
+
 func (c *Carts) CreateCart(userID int) (int, error) {
 	result, err := c.db.Exec("INSERT INTO carts (user_id, status_id) VALUES (?, ?)", userID, CartStatusActive)
 	if err != nil {
@@ -53,7 +59,6 @@ func (c *Carts) CreateCart(userID int) (int, error) {
 	return int(cartID), nil
 }
 
-// Add a product to the cart and return the total number of items in the cart
 func (c *Carts) AddItem(p Product, cartId string, quantity int) (int, error) {
 
 	_, err := c.db.Exec("INSERT INTO cartItems (cart_id, product_id, quantity, price) VALUES (?, ?, ?, ?)", cartId, p.Id, quantity, p.Price)
@@ -91,7 +96,7 @@ func (c *Carts) GetNumItems(cartId string) (int, error) {
 		log.Println("Error getting number of items in cart:", err)
 		return 0, err
 	}
-	return numItems, err
+	return numItems, nil
 }
 
 func (c *Carts) RemoveItem(userID, productID int) error {
@@ -101,4 +106,72 @@ func (c *Carts) RemoveItem(userID, productID int) error {
 	}
 	_, err = c.db.Exec("DELETE FROM cartItems WHERE cart_id = ? AND product_id = ?", cartID, productID)
 	return err
+}
+
+// Redis functions
+
+func GetCartRedis(cartID string, redisClient *redis.Client, ctx context.Context) (map[string]string, error) {
+	cartKey := "cart:" + cartID
+	cart, err := redisClient.HGetAll(ctx, cartKey).Result()
+	if err != nil {
+		switch err {
+		case redis.Nil:
+			log.Println("Cart not found in Redis")
+		default:
+			log.Println("Error getting cart from Redis:", err)
+		}
+	}
+	return cart, nil
+}
+
+func AddToCartRedis(cartID, productID string, quantity int, redisClient *redis.Client, ctx context.Context) error {
+	cartKey := "cart:" + cartID
+	err := redisClient.HSet(ctx, cartKey, productID, quantity).Err()
+	if err != nil {
+		log.Println("Error adding item to cart in Redis:", err)
+	}
+	redisClient.Expire(ctx, cartKey, 24*time.Hour)
+	return nil
+}
+
+func GetItemsInCartRedis(cartID string, redisClient *redis.Client, ctx context.Context) ([]CartItem, error) {
+	cart, err := GetCartRedis(cartID, redisClient, ctx)
+	if err != nil {
+		return nil, err
+	}
+	var items []CartItem
+	for productID, quantityStr := range cart {
+		quantityInt, err := strconv.Atoi(quantityStr)
+		if err != nil {
+			log.Println("Error converting quantity to int:", err)
+		}
+		productIDInt, err := strconv.Atoi(productID)
+		if err != nil {
+			log.Println("Error converting productID to int:", err)
+			continue
+		}
+		items = append(items, CartItem{ProductID: productIDInt, Quantity: quantityInt})
+	}
+	log.Println("Items in cart:", items)
+	return items, nil
+}
+
+func GetItemByIdRedis(cartID, productID string, redisClient *redis.Client, ctx context.Context) (CartItem, error) {
+	cart, err := GetCartRedis(cartID, redisClient, ctx)
+	if err != nil {
+		return CartItem{}, err
+	}
+	quantityStr, ok := cart[productID]
+	if !ok {
+		return CartItem{}, nil
+	}
+	quantityInt, err := strconv.Atoi(quantityStr)
+	if err != nil {
+		log.Println("Error converting quantity to int:", err)
+	}
+	productIDInt, err := strconv.Atoi(productID)
+	if err != nil {
+		log.Println("Error converting productID to int:", err)
+	}
+	return CartItem{ProductID: productIDInt, Quantity: quantityInt}, nil
 }

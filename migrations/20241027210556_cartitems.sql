@@ -16,5 +16,5 @@ CREATE INDEX idx_cartItems_product_id ON cartItems (product_id);
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+DROP TABLE cartItems
 -- +goose StatementEnd

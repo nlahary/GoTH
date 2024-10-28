@@ -11,17 +11,24 @@ CREATE TABLE carts (
 );
 -- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TRIGGER update_timestamp
 AFTER UPDATE ON carts
 FOR EACH ROW
 BEGIN
-    UPDATE carts 
-    SET updated_at = CURRENT_TIMESTAMP 
+    UPDATE carts
+    SET updated_at = CURRENT_TIMESTAMP
     WHERE id = OLD.id;
 END;
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE INDEX idx_carts_user_id ON carts (user_id);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 CREATE INDEX idx_carts_status_id ON carts (status_id);
+-- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin

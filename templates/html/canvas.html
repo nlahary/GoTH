@@ -1,4 +1,4 @@
-{{ define "navbar" }}
+{{ block "navbar" . }}
 <nav class="flex justify-between items-center py-4">
     <div>   
         <a href="/" class="text-[#727D80] hover:text-gray-400 font-aileron">Home</a>
@@ -6,14 +6,12 @@
         <a href="/cart/" class="relative text-[#727D80] hover:text-gray-400 font-aileron">
             <i class="fa fa-shopping-cart"></i> Cart
             <div id="cart-counter" class="absolute -top-3 -right-3 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                {{ template "cartCounter" . }}
+                {{ block "cartCounter" . }}
+                {{ . }}
+                {{ end }}
             </div>
         </a>
         </a>
     </div>
 </nav>
-{{ end }}
-
-{{ block "cartCounter" . }}
-{{ . }}
 {{ end }}
