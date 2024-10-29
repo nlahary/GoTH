@@ -7,11 +7,18 @@ import (
 	"net/http"
 )
 
-// Créer un middleware qui log chaque requête avec des détails
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rec *statusRecorder) WriteHeader(status int) {
+	rec.status = status
+	rec.ResponseWriter.WriteHeader(status)
+}
+
 func DetailedLoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		statusCode := http.StatusOK
-
 		// Lire le corps de la requête
 		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -21,7 +28,12 @@ func DetailedLoggingMiddleware(next http.Handler) http.Handler {
 		// Rétablir le corps de la requête pour les prochains handlers
 		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
-		log.Printf(`{"method": "%s", "status_code": %d, "url": "%s", "body": "%s"}`, r.Method, statusCode, r.URL.String(), string(bodyBytes))
-		next.ServeHTTP(w, r)
+		// Utiliser le ResponseWriter personnalisé
+		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+
+		// Exécuter le prochain handler
+		next.ServeHTTP(rec, r)
+
+		log.Printf(`{"method": "%s", "status_code": %d, "url": "%s", "body": "%s"}`, r.Method, rec.status, r.URL.String(), string(bodyBytes))
 	})
 }

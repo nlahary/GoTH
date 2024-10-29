@@ -178,6 +178,7 @@ func GetTotalNbItemsInCartRedis(cartID string, redisClient *redis.Client, ctx co
 		}
 		totalItems += quantityInt
 	}
+	log.Printf("Total number of items in cart: %d", totalItems)
 	return totalItems, nil
 }
 

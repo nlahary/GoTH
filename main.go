@@ -16,16 +16,14 @@ import (
 
 func main() {
 
-	// Create a context for the application
 	var ctx = context.Background()
 
-	// // Create a Redis client
 	var redisClient = redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "",
 		DB:       0,
 	})
-	// Open a database connection
+
 	db, err := sql.Open("sqlite3", "./app.db")
 	if err != nil {
 		log.Fatal(err)
@@ -33,23 +31,17 @@ func main() {
 	defer db.Close()
 	log.Print("Database connection established")
 
-	// A ServeMux (short for "Serve Multiplexer") is a type that helps route HTTP requests
-	// to the appropriate handler functions based on the URL patterns.
 	router := http.NewServeMux()
 
-	//  Templates refer to HTML files that contain placeholders for dynamic content.
-	// These placeholders are replaced with actual values when the template is executed.
 	tmpl := templates.NewTemplates()
 
-	// Create instances of DB models
-	// These instances will be used to interact with the database
 	contactsDB := mod.NewContacts(db)
 	productsDB := mod.NewProducts(db)
 	cartsDB := mod.NewCarts(db)
 
 	router.Handle("/", md.DetailedLoggingMiddleware(handleIndex(tmpl, contactsDB, cartsDB)))
 	router.Handle("/contacts/", md.DetailedLoggingMiddleware(handlers.HandleContacts(tmpl, contactsDB)))
-	router.Handle("/products/", md.DetailedLoggingMiddleware(handlers.HandleProducts(tmpl, productsDB)))
+	router.Handle("/products/", md.DetailedLoggingMiddleware(handlers.HandleProducts(tmpl, productsDB, redisClient, ctx)))
 	router.Handle("/cart/", md.DetailedLoggingMiddleware(handlers.HandleCart(tmpl, cartsDB, productsDB, contactsDB, redisClient, ctx)))
 	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
