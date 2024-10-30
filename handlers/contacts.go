@@ -12,11 +12,10 @@ import (
 func HandleContacts(tmpl *templates.Templates, contacts *models.Contacts) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-
 		case http.MethodGet:
 			// Case: /contacts/{id}/edit
 			if r.URL.Path[len(r.URL.Path)-5:] == "/edit" {
-				idStr := r.URL.Path[len("/contacts/") : len(r.URL.Path)-5] // enlever "/edit"
+				idStr := r.URL.Path[len("/contacts/") : len(r.URL.Path)-5]
 				id, err := strconv.Atoi(idStr)
 				if err != nil {
 					log.Println("Error converting id to int:", err)

@@ -7,11 +7,11 @@ import (
 )
 
 type Contact struct {
-	Id       int
-	Uuid     string
-	Username string
-	Email    string
-	Status   ContactStatus
+	Id       int           `json:"id"`
+	Uuid     string        `json:"uuid"`
+	Username string        `json:"username"`
+	Email    string        `json:"email"`
+	Status   ContactStatus `json:"status"`
 }
 
 type ContactStatus int

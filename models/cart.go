@@ -27,12 +27,12 @@ type CartItem struct {
 }
 
 type Cart struct {
-	ID        int
-	UserID    int
-	Items     []CartItem
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Status    CartStatus
+	ID        int        `json:"id"`
+	UserID    int        `json:"user_id"`
+	Items     []CartItem `json:"items"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	Status    CartStatus `json:"status"`
 }
 
 type Carts struct {

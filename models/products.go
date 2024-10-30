@@ -6,10 +6,10 @@ import (
 )
 
 type Product struct {
-	Id    int
-	Name  string
-	Desc  string
-	Price float32
+	Id    int     `json:"id"`
+	Name  string  `json:"name"`
+	Desc  string  `json:"desc"`
+	Price float32 `json:"price"`
 }
 
 type Products struct {
