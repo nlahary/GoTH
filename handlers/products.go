@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	cookies "github.com/Nathanael-FR/website/cookies"
-	models "github.com/Nathanael-FR/website/models"
-	"github.com/Nathanael-FR/website/templates"
 	"github.com/go-redis/redis/v8"
+	cookies "github.com/nlahary/website/cookies"
+	models "github.com/nlahary/website/models"
+	"github.com/nlahary/website/templates"
 )
 
 type PageData struct {

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	mod "github.com/Nathanael-FR/website/models"
+	mod "github.com/nlahary/website/models"
 )
 
 type Templates struct {

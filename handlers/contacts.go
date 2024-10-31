@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	models "github.com/Nathanael-FR/website/models"
-	templates "github.com/Nathanael-FR/website/templates"
+	models "github.com/nlahary/website/models"
+	templates "github.com/nlahary/website/templates"
 )
 
 func HandleContacts(tmpl *templates.Templates, contacts *models.Contacts) http.HandlerFunc {
