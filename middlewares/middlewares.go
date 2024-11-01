@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/nlahary/website/models"
 )
@@ -31,18 +32,20 @@ func DetailedLoggingMiddleware(next http.Handler, l *models.HttpLogger) http.Han
 		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		// Utiliser le ResponseWriter personnalisé
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
-		// Exécuter le prochain handler
+		startTimeRequest := time.Now().UnixNano()
 		next.ServeHTTP(rec, r)
+		duration := time.Duration(time.Now().UnixNano() - startTimeRequest).Microseconds()
 
 		logHttp := models.LogHTTP{
-			Method:     r.Method,
-			StatusCode: rec.status,
-			URL:        r.URL.String(),
-			Body:       string(bodyBytes),
+			Method:       r.Method,
+			StatusCode:   rec.status,
+			URL:          r.URL.String(),
+			Body:         string(bodyBytes),
+			ResponseTime: duration,
 		}
 
-		l.SendToKafka(l.Map(logHttp))
+		l.Producer.SendMessage(l.Producer.Map(logHttp))
 
-		log.Printf(`{"method": "%s", "status_code": %d, "url": "%s", "body": "%s"}`, r.Method, rec.status, r.URL.String(), string(bodyBytes))
+		log.Printf(`{"method": "%s", "status_code": %d, "url": "%s", "body": "%s", "response_time": "%d"}`, logHttp.Method, logHttp.StatusCode, logHttp.URL, logHttp.Body, logHttp.ResponseTime)
 	})
 }
