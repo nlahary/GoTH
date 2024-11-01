@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	kafka "github.com/nlahary/website/kafka"
 )
 
-// BasicLogger is a logger that inherits from DefaultLogger
-// used to log code execution messages.
-// It overrides the Print, Println, Fatal and Error methods
-// from the log package to send messages to Kafka.
-type BasicLogger struct {
-	*DefaultLogger
+type CodeExecLogger struct {
+	kafka.Producer
 }
 
 const BasicLogSchema = `{
@@ -30,7 +28,7 @@ type LogMessage struct {
 	Timestamp string `json:"timestamp"`
 }
 
-func (l *BasicLogger) Print(v ...interface{}) {
+func (l *CodeExecLogger) Print(v ...interface{}) {
 	message := fmt.Sprint(v...)
 	logMsg := LogMessage{
 		Level:     "INFO",
@@ -38,10 +36,11 @@ func (l *BasicLogger) Print(v ...interface{}) {
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 	log.Print(v...) // Pour un retour visuel immédiat, optionnel
-	l.SendToKafka(l.Map(logMsg))
+	MappedLogMsg := l.Producer.Map(logMsg)
+	l.Producer.SendMessage(MappedLogMsg)
 }
 
-func (l *BasicLogger) Println(v ...interface{}) {
+func (l *CodeExecLogger) Println(v ...interface{}) {
 	message := fmt.Sprintln(v...)
 	logMsg := LogMessage{
 		Level:     "INFO",
@@ -49,22 +48,24 @@ func (l *BasicLogger) Println(v ...interface{}) {
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 	log.Println(v...) // Pour un retour visuel immédiat, optionnel
-	l.SendToKafka(l.Map(logMsg))
+	MappedLogMsg := l.Producer.Map(logMsg)
+	l.Producer.SendMessage(MappedLogMsg)
 }
 
-func (l *BasicLogger) Fatal(v ...interface{}) {
+func (l *CodeExecLogger) Fatal(v ...interface{}) {
 	message := fmt.Sprint(v...)
 	logMsg := LogMessage{
 		Level:     "FATAL",
 		Message:   message,
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
-	l.SendToKafka(l.Map(logMsg))
+	MappedLogMsg := l.Producer.Map(logMsg)
+	l.Producer.SendMessage(MappedLogMsg)
 	log.Fatal(v...) // Arrête le programme
 
 }
 
-func (l *BasicLogger) Error(v ...interface{}) {
+func (l *CodeExecLogger) Error(v ...interface{}) {
 	message := fmt.Sprint(v...)
 	logMsg := LogMessage{
 		Level:     "ERROR",
@@ -72,5 +73,6 @@ func (l *BasicLogger) Error(v ...interface{}) {
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 	log.Print(v...) // Pour un retour visuel immédiat, optionnel
-	l.SendToKafka(l.Map(logMsg))
+	MappedLogMsg := l.Producer.Map(logMsg)
+	l.Producer.SendMessage(MappedLogMsg)
 }

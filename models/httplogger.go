@@ -1,9 +1,11 @@
 package models
 
-// HttpLogger is a logger that inherits from DefaultLogger
-// used to log HTTP requests and responses
+import (
+	kafka "github.com/nlahary/website/kafka"
+)
+
 type HttpLogger struct {
-	*DefaultLogger
+	kafka.Producer
 }
 
 const HttpLogSchema = `{
@@ -13,13 +15,15 @@ const HttpLogSchema = `{
 		{"name": "method", "type": "string"},
 		{"name": "status_code", "type": "int"},
 		{"name": "url", "type": "string"},
-		{"name": "body", "type": "string"}
+		{"name": "body", "type": "string"},
+		{"name": "response_time", "type": "int"}
 	]
 }`
 
 type LogHTTP struct {
-	Method     string `json:"method"`
-	StatusCode int    `json:"status_code"`
-	URL        string `json:"url"`
-	Body       string `json:"body"`
+	Method       string `json:"method"`
+	StatusCode   int    `json:"status_code"`
+	URL          string `json:"url"`
+	Body         string `json:"body"`
+	ResponseTime int64  `json:"response_time"`
 }
