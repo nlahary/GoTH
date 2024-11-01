@@ -159,9 +159,6 @@ func GetItemsInCartRedis(cartID string, redisClient *redis.Client, ctx context.C
 		}
 		items = append(items, CartItem{ProductID: productIDInt, Quantity: quantityInt})
 	}
-	for _, item := range items {
-		println("ItemID: ", item.ProductID, " Quantity: ", item.Quantity)
-	}
 	return items, nil
 }
 

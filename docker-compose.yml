@@ -9,6 +9,13 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_SERVERS: zoo1:2888:3888
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD", "zookeeper-shell", "zoo1", "2181", "ls", "/" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
 
   kafka1:
     image: confluentinc/cp-kafka:7.3.2
@@ -34,6 +41,59 @@ services:
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
     depends_on:
       - zoo1
+    networks:
+      - kafka-net
+    healthcheck:
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka1:19092" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  kafkaconnect:
+    image: confluentinc/cp-kafka-connect:7.3.2
+    hostname: kafkaConnect
+    container_name: kafkaConnect
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "kafka1:19092"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafkaConnect"
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: "connect-cluster"
+      CONNECT_CONFIG_STORAGE_TOPIC: "connect-configs"
+      CONNECT_OFFSET_STORAGE_TOPIC: "connect-offsets"
+      CONNECT_STATUS_STORAGE_TOPIC: "connect-status"
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/etc/kafka-connect/jars,/usr/share/confluent-hub-components"
+      # edit replication factor to 1
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+    depends_on:
+      - kafka1
+      - elasticsearch
+    networks:
+      - kafka-net
+    entrypoint:
+      - bash
+      - -c
+      - |
+        confluent-hub install --no-prompt confluentinc/kafka-connect-elasticsearch:14.1.2
+        /etc/confluent/docker/run
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.3.2
+    hostname: schemaRegistry
+    container_name: schemaRegistry
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zoo1:2181"
+      SCHEMA_REGISTRY_HOST_NAME: "schemaRegistry"
+      SCHEMA_REGISTRY_LISTENERS: "http://schemaRegistry:8081"
 
   kafkaUI:
     image: provectuslabs/kafka-ui:latest
@@ -53,7 +113,9 @@ services:
       KAFKA_CLUSTERS_0_SASLPASSWORD: "admin"
     depends_on:
       - kafka1
-      
+    networks:
+      - kafka-net 
+
   redis:
     image: redis
     container_name: redis
@@ -61,6 +123,17 @@ services:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    networks:
+      - kafka-net
+
 networks:
-  default:
-    name: kafka_redis_network
+  kafka-net:
+    name: kafka-net

@@ -8,36 +8,56 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	_ "github.com/mattn/go-sqlite3"
-	handlers "github.com/nlahary/website/handlers"
-	kafka "github.com/nlahary/website/kafka"
-	middlewares "github.com/nlahary/website/middlewares"
-	mod "github.com/nlahary/website/models"
-	templates "github.com/nlahary/website/templates"
+	"github.com/nlahary/website/handlers"
+	"github.com/nlahary/website/kafka"
+	"github.com/nlahary/website/middlewares"
+	"github.com/nlahary/website/models"
+	"github.com/nlahary/website/templates"
+	"github.com/riferrei/srclient"
 )
 
 const (
-	kafkaTopic      = "logs"
-	sqliteDB        = "./app.db"
-	kafkaBrokerAddr = "localhost:9092"
-	redisAddr       = "localhost:6379"
-	serverAddr      = "localhost:42069"
+	CodeExecLogsTopic  = "logs"
+	HttpLogsTopic      = "httplogs"
+	sqliteDB           = "./app.db"
+	kafkaBrokerAddr    = "localhost:9092"
+	redisAddr          = "localhost:6379"
+	elasticAddr        = "localhost:9200"
+	serverAddr         = "localhost:42069"
+	schemaRegistryAddr = "localhost:8081"
 )
 
 func main() {
 
-	producer, err := kafka.NewProducer([]string{kafkaBrokerAddr}, kafkaTopic)
+	// Add topic schemas to schema registry
+	schemaRegistryClient := srclient.CreateSchemaRegistryClient(schemaRegistryAddr)
+	err := kafka.RegisterSchemaIfNotExists(schemaRegistryClient, CodeExecLogsTopic, models.BasicLogSchema)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print("Kafka producer connection established")
-	defer producer.Close()
+	err = kafka.RegisterSchemaIfNotExists(schemaRegistryClient, HttpLogsTopic, models.BasicLogSchema)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print("Schemas registered in schema registry")
 
-	logger := mod.BasicLogger{
-		DefaultLogger: mod.NewLogger(producer, mod.BasicLogSchema),
+	CodeExecLoggerProducer, err := kafka.NewProducer([]string{kafkaBrokerAddr}, CodeExecLogsTopic, schemaRegistryClient)
+	if err != nil {
+		log.Fatal(err)
 	}
-	httplogger := mod.HttpLogger{
-		DefaultLogger: mod.NewLogger(producer, mod.HttpLogSchema),
+	defer CodeExecLoggerProducer.Close()
+
+	HttpLoggerProducer, err := kafka.NewProducer([]string{kafkaBrokerAddr}, HttpLogsTopic, schemaRegistryClient)
+	if err != nil {
+		log.Fatal(err)
 	}
+	defer HttpLoggerProducer.Close()
+
+	log.Print("Kafka broker connection established")
+
+	logger := models.CodeExecLogger{Producer: *CodeExecLoggerProducer}
+	httplogger := models.HttpLogger{Producer: *HttpLoggerProducer}
+
 	var ctx = context.Background()
 
 	var redisClient = redis.NewClient(&redis.Options{
@@ -45,6 +65,11 @@ func main() {
 		Password: "",
 		DB:       0,
 	})
+	_, err = redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print("Redis connection established")
 
 	db, err := sql.Open("sqlite3", sqliteDB)
 	if err != nil {
@@ -57,9 +82,9 @@ func main() {
 
 	tmpl := templates.NewTemplates()
 
-	contactsDB := mod.NewContacts(db)
-	productsDB := mod.NewProducts(db)
-	cartsDB := mod.NewCarts(db)
+	contactsDB := models.NewContacts(db)
+	productsDB := models.NewProducts(db)
+	cartsDB := models.NewCarts(db)
 
 	router.Handle("/", handleIndex(tmpl, contactsDB))
 	router.Handle("/contacts/", handlers.HandleContacts(tmpl, contactsDB))
@@ -76,7 +101,7 @@ func main() {
 
 }
 
-func handleIndex(tmpl *templates.Templates, contacts *mod.Contacts) http.HandlerFunc {
+func handleIndex(tmpl *templates.Templates, contacts *models.Contacts) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		// cartId := cookies.GetCartCookie(w, r)
