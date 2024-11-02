@@ -24,7 +24,7 @@ const (
 	redisAddr          = "localhost:6379"
 	elasticAddr        = "localhost:9200"
 	serverAddr         = "localhost:42069"
-	schemaRegistryAddr = "localhost:8081"
+	schemaRegistryAddr = "http://localhost:8081"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = kafka.RegisterSchemaIfNotExists(schemaRegistryClient, HttpLogsTopic, models.BasicLogSchema)
+	err = kafka.RegisterSchemaIfNotExists(schemaRegistryClient, HttpLogsTopic, models.HttpLogSchema)
 	if err != nil {
 		log.Fatal(err)
 	}

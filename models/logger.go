@@ -36,8 +36,7 @@ func (l *CodeExecLogger) Print(v ...interface{}) {
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 	log.Print(v...) // Pour un retour visuel immédiat, optionnel
-	MappedLogMsg := l.Producer.Map(logMsg)
-	l.Producer.SendMessage(MappedLogMsg)
+	l.Producer.SendMessage(logMsg)
 }
 
 func (l *CodeExecLogger) Println(v ...interface{}) {
@@ -48,8 +47,7 @@ func (l *CodeExecLogger) Println(v ...interface{}) {
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 	log.Println(v...) // Pour un retour visuel immédiat, optionnel
-	MappedLogMsg := l.Producer.Map(logMsg)
-	l.Producer.SendMessage(MappedLogMsg)
+	l.Producer.SendMessage(logMsg)
 }
 
 func (l *CodeExecLogger) Fatal(v ...interface{}) {
@@ -59,8 +57,7 @@ func (l *CodeExecLogger) Fatal(v ...interface{}) {
 		Message:   message,
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
-	MappedLogMsg := l.Producer.Map(logMsg)
-	l.Producer.SendMessage(MappedLogMsg)
+	l.Producer.SendMessage(logMsg)
 	log.Fatal(v...) // Arrête le programme
 
 }
@@ -73,6 +70,5 @@ func (l *CodeExecLogger) Error(v ...interface{}) {
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 	log.Print(v...) // Pour un retour visuel immédiat, optionnel
-	MappedLogMsg := l.Producer.Map(logMsg)
-	l.Producer.SendMessage(MappedLogMsg)
+	l.Producer.SendMessage(logMsg)
 }

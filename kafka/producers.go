@@ -1,9 +1,9 @@
 package kafka
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"log"
-	"reflect"
-	"strings"
 
 	"github.com/IBM/sarama"
 	"github.com/linkedin/goavro/v2"
@@ -15,6 +15,7 @@ type Producer struct {
 	topic          string
 	schemaRegistry *srclient.SchemaRegistryClient
 	codec          *goavro.Codec
+	schemaID       int
 }
 
 func NewProducer(brokers []string, topic string, schemaRegistryClient *srclient.SchemaRegistryClient) (*Producer, error) {
@@ -36,54 +37,52 @@ func NewProducer(brokers []string, topic string, schemaRegistryClient *srclient.
 		return nil, err
 	}
 
+	log.Println("Producer created with schema ID:", schema.ID())
 	return &Producer{
 		producer:       producer,
 		topic:          topic,
 		schemaRegistry: schemaRegistryClient,
 		codec:          codec,
+		schemaID:       schema.ID(),
 	}, nil
 }
 
-// Map a struct (supposed to be a message) to a map[string]interface{}
-func (p *Producer) Map(message interface{}) map[string]interface{} {
-	MappedMessage := make(map[string]interface{})
-	if message == nil {
-		log.Fatalf("Message vide")
-		return MappedMessage
-	}
-	value := reflect.ValueOf(message)
-	if value.Kind() == reflect.Ptr {
-		value = value.Elem()
-	}
-	if value.Kind() != reflect.Struct {
-		log.Fatalf("Message invalide")
-		return MappedMessage
-	}
-	typeOfStruct := value.Type()
-	for i := 0; i < value.NumField(); i++ {
-		field := typeOfStruct.Field(i)
-		fieldName := field.Name
-		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
-			fieldName = jsonTag
-		} else {
-			fieldName = strings.ToLower(fieldName)
-		}
-		MappedMessage[fieldName] = value.Field(i).Interface()
-	}
-	return MappedMessage
-}
+func (p *Producer) SendMessage(message interface{}) error {
 
-func (p *Producer) SendMessage(message map[string]interface{}) error {
-	avroMsg, err := p.codec.BinaryFromNative(nil, message)
+	jsonBytes, err := json.Marshal(message)
 	if err != nil {
+		log.Println("Failed to marshal message:", err)
 		return err
 	}
 
+	native, _, err := p.codec.NativeFromTextual(jsonBytes)
+	if err != nil {
+		log.Println("Failed to encode message:", err)
+		return err
+	}
+	valueBytes, err := p.codec.BinaryFromNative(nil, native)
+	if err != nil {
+		log.Println("Failed to encode message:", err)
+		return err
+	}
+
+	schemaIDBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(schemaIDBytes, uint32(p.schemaID))
+
+	var messageValue []byte
+
+	messageValue = append(messageValue, byte(0))
+	messageValue = append(messageValue, schemaIDBytes...)
+	messageValue = append(messageValue, valueBytes...)
+
 	msg := &sarama.ProducerMessage{
 		Topic: p.topic,
-		Value: sarama.ByteEncoder(avroMsg),
+		Value: sarama.ByteEncoder(messageValue),
 	}
 	_, _, err = p.producer.SendMessage(msg)
+	if err != nil {
+		log.Println("Failed to send message:", err)
+	}
 	return err
 }
 

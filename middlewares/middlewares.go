@@ -44,7 +44,7 @@ func DetailedLoggingMiddleware(next http.Handler, l *models.HttpLogger) http.Han
 			ResponseTime: duration,
 		}
 
-		l.Producer.SendMessage(l.Producer.Map(logHttp))
+		l.Producer.SendMessage(logHttp)
 
 		log.Printf(`{"method": "%s", "status_code": %d, "url": "%s", "body": "%s", "response_time": "%d"}`, logHttp.Method, logHttp.StatusCode, logHttp.URL, logHttp.Body, logHttp.ResponseTime)
 	})
