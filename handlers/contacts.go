@@ -58,7 +58,7 @@ func HandleContacts(tmpl *templates.Templates, contacts *models.Contacts) http.H
 
 			username := r.FormValue("name")
 			email := r.FormValue("email")
-			newContact := &models.Contact{Username: username, Email: email, Status: models.ContactStatusUser, Uuid: ""}
+			newContact := &models.Contact{Username: username, Email: email, Status: models.ContactStatusUser}
 			userId, err := contacts.InsertContact(newContact)
 			if err != nil {
 				log.Println("Error inserting contact:", err)

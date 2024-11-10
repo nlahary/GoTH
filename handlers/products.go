@@ -39,6 +39,7 @@ func HandleProducts(
 				ProductsList: productsList,
 				CartCount:    nbItems,
 			}
+
 			tmpl.ExecuteTemplate(w, "productsPage", pageData)
 		}
 	}

@@ -7,8 +7,8 @@ import (
 )
 
 type Contact struct {
-	Id       int           `json:"id"`
-	Uuid     string        `json:"uuid"`
+	Id int `json:"id"`
+	// Uuid     string        `json:"uuid"`
 	Username string        `json:"username"`
 	Email    string        `json:"email"`
 	Status   ContactStatus `json:"status"`
@@ -37,8 +37,8 @@ func NewContacts(db *sql.DB) *Contacts {
 
 func (c *Contacts) InsertContact(contact *Contact) (int, error) {
 	result, err := c.db.Exec(
-		"INSERT INTO contacts (uuid, username, email, status) VALUES (?, ?, ?, ?)",
-		contact.Uuid, contact.Username, contact.Email, contact.Status)
+		"INSERT INTO contacts (username, email, status) VALUES (?, ?, ?)",
+		contact.Username, contact.Email, contact.Status)
 	if err != nil {
 		return 0, err
 	}

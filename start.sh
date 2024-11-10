@@ -7,6 +7,7 @@ if [ ! -f "$SINK_CONNECTOR_PATH" ]; then
   exit 1
 fi
 
+# Start the services
 docker-compose up -d 
 
 while true; do
@@ -27,3 +28,5 @@ while [[ $response != *"RUNNING"* ]]; do
 done
 
 echo "Connector is running!"
+
+air
