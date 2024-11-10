@@ -87,9 +87,15 @@ func main() {
 	cartsDB := models.NewCarts(db)
 
 	router.Handle("/", handleIndex(tmpl, contactsDB))
-	router.Handle("/contacts/", handlers.HandleContacts(tmpl, contactsDB))
-	router.Handle("/products/", handlers.HandleProducts(tmpl, productsDB, redisClient, ctx))
-	router.Handle("/cart/", handlers.HandleCart(tmpl, cartsDB, productsDB, contactsDB, redisClient, ctx))
+
+	router.Handle("GET /contacts/", handlers.HandleContactsGet(tmpl, contactsDB))
+	router.Handle("POST /contacts/", handlers.HandleContactsPost(tmpl, contactsDB))
+	router.Handle("DELETE /contacts/", handlers.HandleContactsDelete(tmpl, contactsDB))
+	router.Handle("PUT /contacts/", handlers.HandleContactsPut(tmpl, contactsDB))
+
+	router.Handle("GET /products/", handlers.HandleProductsGet(tmpl, productsDB, redisClient, ctx))
+	router.Handle("POST /cart/", handlers.HandleCartPost(tmpl, cartsDB, productsDB, contactsDB, redisClient, ctx))
+
 	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	server := http.Server{
