@@ -7,6 +7,7 @@
     <title>Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
     <script>
         // register a listener for the htmx:afterRequest event to handle 422 responses (HTMX default behavior is to ignore them)
@@ -18,9 +19,10 @@
         });
     </script>
 </head>
-<body class="bg-[#142E36] p-4">
 
-    {{ template "navbar" }}
+<body class="bg-gray-100 p-4">
+
+    {{ template "navbar" .CartCount }}
 
     <form class="mt-4" hx-post="/contacts/" hx-target="#display" hx-swap="afterend" hx-on::after-request="if(event.detail.successful) this.reset()" hx-indicator="#error-container"> 
         <div class="mb-4">
@@ -35,8 +37,10 @@
     </form> 
     
     <div id="error-container" class="text-red-500 mt-4"></div>
-    <div id="display" class="mt-4"> </div>
-    
+    <div id="display" class="mt-4"> </div> 
+
+    {{ template "display" .ContactsList }}
+
 </body>
 </html>
 {{ end }}
@@ -60,12 +64,6 @@
     </button>
     <button class="bg-yellow-500 text-white px-4 py-2 rounded mt-2" hx-get="/contacts/{{.Id}}/edit">Click to edit</button>
     <hr class="mt-4">
-</div>
-{{ end }}
-
-{{ block "error" . }}
-<div id="error-message" class="error" style="color: red;">
-    {{ . }}
 </div>
 {{ end }}
 

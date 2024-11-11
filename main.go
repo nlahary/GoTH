@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/nlahary/website/cookies"
 	"github.com/nlahary/website/handlers"
 	"github.com/nlahary/website/kafka"
 	"github.com/nlahary/website/middlewares"
@@ -86,7 +87,7 @@ func main() {
 	productsDB := models.NewProducts(db)
 	cartsDB := models.NewCarts(db)
 
-	router.Handle("/", handleIndex(tmpl, contactsDB))
+	router.Handle("/", handleIndex(tmpl, contactsDB, redisClient, ctx))
 
 	router.Handle("GET /contacts/", handlers.HandleContactsGet(tmpl, contactsDB))
 	router.Handle("POST /contacts/", handlers.HandleContactsPost(tmpl, contactsDB))
@@ -107,20 +108,34 @@ func main() {
 
 }
 
-func handleIndex(tmpl *templates.Templates, contacts *models.Contacts) http.HandlerFunc {
+type PageData struct {
+	ContactsList []models.Contact
+	CartCount    int
+}
+
+func handleIndex(tmpl *templates.Templates, contacts *models.Contacts, redisClient *redis.Client, ctx context.Context) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		// cartId := cookies.GetCartCookie(w, r)
-		// numProducts, _ := carts.GetNumItems(cartId)
-		AllContacts, err := contacts.GetAllContacts()
+		contactsList, err := contacts.GetAllContacts()
 		if err != nil {
 			log.Println("Error getting contacts:", err)
 			http.Error(w, "Error getting contacts", http.StatusInternalServerError)
 			return
 		}
 
-		tmpl.ExecuteTemplate(w, "index", AllContacts)
-		tmpl.ExecuteTemplate(w, "display", AllContacts)
+		cartID := cookies.GetCartCookie(w, r)
+		nbItems, err := models.GetTotalNbItemsInCartRedis(cartID, redisClient, ctx)
+		if err != nil {
+			http.Error(w, "Error getting total number of items in cart", http.StatusInternalServerError)
+			return
+		}
+		pageData := PageData{
+			ContactsList: contactsList,
+			CartCount:    nbItems,
+		}
+
+		tmpl.ExecuteTemplate(w, "index", pageData)
+		// tmpl.ExecuteTemplate(w, "display", contactsList)
 
 	}
 }

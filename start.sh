@@ -10,12 +10,12 @@ fi
 # Start the services
 docker-compose up -d 
 
-while true; do
-  curl -sSf http://localhost:8083/ > /dev/null
-  if [ $? -eq 0 ]; then
+  response=$(curl -s -X GET http://localhost:8083/connectors/elasticsearch-sink/status)
+  if [[ $response == *"RUNNING"* ]]; then
     break
   fi
-  sleep 5
+  echo "waiting for kafka connector to be up and running"
+  sleep 10
 done
 
 curl -s -X POST -H "Content-Type: application/json" --data @"$SINK_CONNECTOR_PATH" http://localhost:8083/connectors

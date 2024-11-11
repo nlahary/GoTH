@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
     <title>Products</title>
 </head>
-<body class="bg-[#142E36] p-4">
+<body class="bg-gray-100 p-4">
     {{ template "navbar" .CartCount }}
     {{ template "displayProducts" .ProductsList }}
 </body>
@@ -17,15 +17,15 @@
 {{ end }}
 
 {{ block "product" . }}
-    <div class="border border-gray-300 p-4 rounded hover:bg-gray-100 cursor-pointer">
-        <h2>{{ .Name }}</h2>
-        <p>{{ .Desc }}</p>
-        <p>{{ .Price }}</p>
+    <div class="border border-gray-300 p-4 rounded hover:shadow-lg">
+        <h2>Name : {{ .Name }}</h2>
+        <p>Desc : {{ .Desc }}</p>
+        <p>Price : ${{ .Price }}</p>
         <button 
+        class="bg-green-500 text-white px-4 py-2 rounded"
         hx-post="/cart/{{ .Id }}"
         hx-swap="innerHTML" 
         hx-trigger="click" 
-        hx-indicator=".loading"
         hx-target="#cart-counter"
         >
         Add to Cart</button>
@@ -33,7 +33,6 @@
 {{ end }}
 
 {{ block "displayProducts" . }}
-    <!-- Display the products with 4 products per row and centered -->
     <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
         {{ if . }}
             {{ range batch . 4 }}
