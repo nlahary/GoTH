@@ -1,6 +1,6 @@
 <p align="center">
-  <img src="images/golang.png" alt="golang Logo" width="200", style="margin-right: 20px">
-  <img src="images/kafka.png" alt="kafka Logo" width="165", style="margin-left: 20px">
+  <img src="images/golang.png" alt="golang Logo" width="400", style="margin-right: 50px">
+  <img src="images/kafka.png" alt="kafka Logo" width="365", style="margin-left: 50px">
 </p>
 
 This project is a simple implementation of a web server in golang, using the following stack:
